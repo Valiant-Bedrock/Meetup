@@ -1,0 +1,13 @@
+parameters:
+    level: 7
+    paths:
+        - src
+        - tests
+    ignoreErrors:
+        -
+            message: "#^Class Logger not found.\\.$#"
+            count: 2
+            path: "src\sys\jordan\meetup\MeetupBase.php"
+    scanDirectories:
+        # We should make a composer package for the core plugin, but this'll do for now
+        - C:\Users\Matt\Documents\Valiant Network\Dev Server\plugins\Core

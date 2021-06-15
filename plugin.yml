@@ -1,0 +1,8 @@
+name: Meetup
+description: Meetup plugin for Paradox
+author: sylvrs
+version: 1.0.0
+depend:
+  - Core
+api: 4.0.0
+main: sys\jordan\meetup\MeetupBase

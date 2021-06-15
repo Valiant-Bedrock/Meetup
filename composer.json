@@ -1,0 +1,23 @@
+{
+  "name": "sylvrs/meetup",
+  "description": "Valiant Network's Meetup gamemode",
+  "minimum-stability": "dev",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Matthew Jordan",
+      "email": "matt@valiantnetwork.xyz"
+    }
+  ],
+  "scripts": {},
+  "require": {
+    "pocketmine/pocketmine-mp": "dev-master",
+    "pocketmine/spl": "dev-master"
+  },
+  "require-dev": {},
+  "autoload": {
+    "psr-4": {
+      "sys\\jordan\\": "src/"
+    }
+  }
+}
