@@ -7,6 +7,7 @@ namespace sys\jordan\meetup\game;
 use pocketmine\block\utils\SkullType;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\entity\Entity;
+use pocketmine\lang\TranslationContainer;
 use pocketmine\math\Facing;
 use pocketmine\network\mcpe\protocol\AddActorPacket;
 use pocketmine\network\mcpe\protocol\PlaySoundPacket;
@@ -21,15 +22,20 @@ use sys\jordan\meetup\kit\Kit;
 use sys\jordan\meetup\MeetupBase;
 use sys\jordan\meetup\MeetupPlayer;
 use sys\jordan\meetup\player\PlayerManager;
+use sys\jordan\meetup\scenario\Scenario;
 use sys\jordan\meetup\scenario\ScenarioManager;
 use sys\jordan\meetup\spectator\SpectatorManager;
 use sys\jordan\meetup\utils\MeetupBaseTrait;
 use sys\jordan\meetup\vote\VoteManager;
+use sys\jordan\meetup\world\WorldManager;
 
 class Game {
-
 	use MeetupBaseTrait;
 
+	/** @var int */
+	public const MAX_PLAYER_COUNT = 100;
+
+	protected int $votingTime = 45;
 	protected int $countdown = 45;
 	protected int $time = 0;
 	protected int $postgame = 15;
@@ -45,7 +51,6 @@ class Game {
 	protected ClosureTask $heartbeat;
 	protected ClosureTask $scoreboardHeartbeat;
 
-	protected GameEventHandler $handler;
 	protected GameListener $listener;
 	protected GameLogger $logger;
 	protected GameScoreboard $scoreboard;
@@ -65,13 +70,11 @@ class Game {
 		$this->setState(GameState::WAITING());
 		$this->border = new Border($world);
 
-		//TODO: Ensure kit is cloned
-
 		$this->heartbeat = new ClosureTask(function (): void { $this->update(); });
-		$this->scoreboardHeartbeat = new ClosureTask(function (): void { $this->updateScoreboard(); });
+		$this->scoreboardHeartbeat = new ClosureTask(function (): void { $this->updateUI(); });
 
-		$this->handler = new GameEventHandler($this);
 		$this->listener = new GameListener($plugin, $this);
+		$this->listener->register();
 		$this->logger = new GameLogger($this);
 
 		$this->scoreboard = new GameScoreboard($this);
@@ -97,6 +100,14 @@ class Game {
 
 	public function getKit(): Kit {
 		return $this->kit;
+	}
+
+	public function giveKits(): void {
+		foreach($this->getPlayerManager()->getPlayers() as $player) {
+			$kit = $this->getKit()->pull();
+			$player->getInventory()->setContents($kit->getItemContents());
+			$player->getArmorInventory()->setContents($kit->getArmorContents());
+		}
 	}
 
 	public function getWorld(): World {
@@ -133,10 +144,6 @@ class Game {
 		return $this->voteManager;
 	}
 
-	public function getHandler(): GameEventHandler {
-		return $this->handler;
-	}
-
 	public function getListener(): GameListener {
 		return $this->listener;
 	}
@@ -170,8 +177,10 @@ class Game {
 	 * WAITING -> VOTING
 	 */
 	public function start(): void {
-		$this->broadcastMessage(TextFormat::GREEN . "The player threshold has been met! Starting countdown!");
+		$this->notify(TextFormat::GREEN . "The player threshold has been met! Voting will now commence!", TextFormat::GREEN);
 		$this->setState(GameState::VOTING());
+		$this->getPlayerManager()->start();
+		$this->getVoteManager()->giveItems();
 	}
 
 	/**
@@ -183,8 +192,10 @@ class Game {
 			$player->fullHeal();
 			$player->feed();
 			$player->setImmobile(false);
+			$player->getHungerManager()->setEnabled(true);
 		}
-		$this->broadcastMessage(TextFormat::GREEN . "The meetup has now started! Good luck!");
+		$this->setState(GameState::PLAYING());
+		$this->broadcastMessage(TextFormat::GREEN . "The meetup has now started! Good luck!", true);
 	}
 
 	public function end(): void {
@@ -218,28 +229,58 @@ class Game {
 	}
 
 	public function handleWaiting(): void {
-
+		$this->broadcastActionBar(TextFormat::YELLOW . "Waiting for players...");
+		if($this->playerManager->canStart()) {
+			$this->start();
+		}
 	}
 
 	public function handleVoting(): void {
-
+		$this->broadcastActionBar(TextFormat::YELLOW . "Voting will end in $this->votingTime...");
+		if($this->votingTime-- <= 0) {
+			$scenarios = []; // $this->getVoteManager()->check();
+//			foreach($scenarios as $scenario) {
+//				$this->getScenarioManager()->add($scenario);
+//			}
+			if(count($scenarios) > 0) {
+				$message = TextFormat::GREEN . "The scenarios for this game are: [" . implode(", ",  array_map(fn(Scenario $scenario): string => TextFormat::YELLOW . $scenario->getName() . TextFormat::GREEN, $scenarios)) . TextFormat::GREEN . "]!";
+			} else {
+				$message = TextFormat::GREEN . "There are no scenarios enabled for this game!";
+			}
+			$this->broadcastMessage($message, true);
+			$this->setState(GameState::COUNTDOWN());
+			$this->giveKits();
+		}
 	}
 
 	public function handleCountdown(): void {
-
+		$this->broadcastActionBar(TextFormat::YELLOW . "The game will commence in $this->countdown...");
+		if($this->countdown-- <= 0) {
+			$this->play();
+		}
 	}
 
 	public function handlePlaying(): void {
-
+		$this->time++;
+		$this->getPlayerManager()->check();
 	}
 
 	public function handlePostgame(): void {
-
+		$this->broadcastActionBar(TextFormat::YELLOW . "Game ending in $this->postgame...");
+		if($this->postgame-- <= 0) {
+			$this->end();
+			$this->delete();
+		}
 	}
 
-	public function updateScoreboard(): void {
+	public function updateUI(): void {
 		foreach($this->getAll() as $player) {
 			$this->getScoreboard()->sendData($player);
+			$player->setScoreTag($player->getHealthString());
+			$this->broadcastTip(
+				TextFormat::WHITE . "CPS: " . TextFormat::YELLOW . $player->getClicksPerSecond() .
+				TextFormat::WHITE . " | Ping: " . TextFormat::YELLOW . $player->getNetworkSession()->getPing()
+			);
 		}
 	}
 
@@ -249,7 +290,14 @@ class Game {
 		}
 	}
 
-	public function broadcastMessage(string $message): void {
+	public function broadcastPopup(string $message): void {
+		foreach($this->getAll() as $player) {
+			$player->sendPopup($message);
+		}
+	}
+
+	public function broadcastMessage(TranslationContainer|string $message, bool $addPrefix = false): void {
+		if($addPrefix && is_string($message)) $message = TextFormat::RED . "Game" . TextFormat::WHITE . " » $message";
 		foreach($this->getAll() as $player) {
 			$player->sendMessage($message);
 		}
@@ -257,7 +305,19 @@ class Game {
 
 	public function broadcastTitle(string $title, string $subtitle = ""): void {
 		foreach($this->getAll() as $player) {
-			$player->sendTitle($title, $subtitle);
+			$player->sendTitle($title, $subtitle, 0, -1, 0);
+		}
+	}
+
+	public function broadcastActionBar(string $message): void {
+		foreach($this->getAll() as $player) {
+			$player->sendActionBarMessage($message);
+		}
+	}
+
+	public function notify(string $message, string $color = TextFormat::WHITE): void {
+		foreach($this->getAll() as $player) {
+			$player->notify($message, $color);
 		}
 	}
 
@@ -301,6 +361,8 @@ class Game {
 		$this->scoreboardHeartbeat->getHandler()?->cancel();
 		$this->listener->unregister();
 		$this->world->getServer()->getWorldManager()->unloadWorld($this->world);
+		$this->border->handleWorld();
+		$this->getPlugin()->getGameManager()->remove($this);
 		foreach($this as $key => $value) {
 			unset($this->$key);
 		}

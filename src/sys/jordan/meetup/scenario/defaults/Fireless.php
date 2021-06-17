@@ -13,11 +13,7 @@ class Fireless extends Scenario {
 		parent::__construct("Fireless", "Fire damage will be disabled. This includes lava, flint and steel, and flame/fire aspect enchantments.");
 	}
 
-	public function onAdd(Game $game): void {
-		// TODO: Implement onAdd() method.
-	}
+	public function onAdd(Game $game): void {}
 
-	public function onRemove(Game $game): void {
-		// TODO: Implement onRemove() method.
-	}
+	public function onRemove(Game $game): void {}
 }

@@ -10,12 +10,15 @@ use pocketmine\block\BlockLegacyIds;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\utils\TextFormat;
+use pocketmine\world\format\Chunk;
 use pocketmine\world\Position;
 use pocketmine\world\utils\SubChunkExplorer;
+use pocketmine\world\utils\SubChunkExplorerStatus;
 use pocketmine\world\World;
 use sys\jordan\meetup\MeetupBase;
 use sys\jordan\meetup\MeetupPlayer;
 
+use sys\jordan\meetup\world\WorldManager;
 use function floor, abs;
 use function mt_rand;
 
@@ -142,16 +145,29 @@ class Border {
 		$iterator->moveTo($minX, 128, $minZ);
 		for($x = $minX; $x <= $maxX; $x++) {
 			for($z = $minZ; $z <= $maxZ; $z++) {
-				$y = $iterator->currentChunk->getHighestBlockAt($x & 0x0f, $z & 0x0f);
-				$iterator->moveTo($x, $y, $z);
-				while($this->isPassable($iterator->currentChunk->getFullBlock($x & 0x0f, $y, $z & 0x0f)) && $y > 1) {
-					$y -= 1;
+				if(!$iterator->currentChunk instanceof Chunk) {
+					$this->getWorld()->orderChunkPopulation($x >> 4, $z >> 4, null)->onCompletion(
+						function() use($x, $z, $iterator): void {
+							$this->setBorderBlock($x, $z, $iterator);
+						},
+						static function() : void {}
+					);
+					continue;
 				}
-				$y += 1;
-				$iterator->moveTo($x, $y, $z);
-				$iterator->currentSubChunk->setFullBlock($x & 0x0f, $y & 0x0f, $z & 0x0f, $this->fullBlockId);
+				$this->setBorderBlock($x, $z, $iterator);
 			}
 		}
+	}
+
+	public function setBorderBlock(int $x, int $z, SubChunkExplorer $iterator): void {
+		$iterator->moveTo($x, 128, $z);
+		$y = $iterator->currentChunk->getHighestBlockAt($x & 0x0f, $z & 0x0f);
+		while($this->isPassable($iterator->currentChunk->getFullBlock($x & 0x0f, $y, $z & 0x0f)) && $y > 1) {
+			$y -= 1;
+		}
+		$y += 1;
+		$iterator->moveTo($x, $y, $z);
+		$iterator->currentSubChunk->setFullBlock($x & 0x0f, $y & 0x0f, $z & 0x0f, $this->fullBlockId);
 	}
 
 	public function createWall(int $x1, int $x2, int $z1, int $z2): void {
@@ -166,12 +182,16 @@ class Border {
 		$bounds = $this->getTeleportBounds();
 		$x = mt_rand(-$bounds, $bounds);
 		$z = mt_rand(-$bounds, $bounds);
-		$y = $this->getWorld()->getHighestBlockAt($x, $z) + 1;
-		if($this->isDisallowed($this->getWorld()->getBlockAt($x, $y - 1, $z, false, false)->getId()) || $y <= 0) {
-			$this->randomTeleport($player);
-			return;
-		}
-		$player->teleport(new Position($x + 0.5, $y, $z + 0.5, $this->getWorld()));
+		$this->getWorld()->orderChunkPopulation($x >> 4, $z >> 4, null)->onCompletion(function () use($x, $z, $player): void {
+			$y = $this->getWorld()->getHighestBlockAt($x, $z) + 1;
+			if($this->isDisallowed($this->getWorld()->getBlockAt($x, $y - 1, $z, false, false)->getId()) || $y <= 0) {
+				$this->randomTeleport($player);
+				return;
+			}
+			$player->teleport(new Position($x + 0.5, $y, $z + 0.5, $this->getWorld()));
+			$player->notify(TextFormat::YELLOW . "You have been randomly scattered across the map!", TextFormat::YELLOW);
+		}, static function (): void {});
+
 	}
 
 	public function teleport(MeetupPlayer $player): void {
@@ -185,6 +205,10 @@ class Border {
 		$location->y = $this->getWorld()->getHighestBlockAt($location->getFloorX(), $location->getFloorZ()) + 1;
 		$player->teleport($location);
 		$this->sendMessage($player, TextFormat::YELLOW . "You have been teleported inside the border!");
+	}
+
+	public function handleWorld(): void {
+		WorldManager::delete(WorldManager::$TARGET_DIRECTORY . DIRECTORY_SEPARATOR . explode("/", $this->world->getFolderName())[1]);
 	}
 
 }

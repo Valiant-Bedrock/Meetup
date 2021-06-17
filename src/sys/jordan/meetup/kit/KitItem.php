@@ -14,36 +14,24 @@ class KitItem {
 		$this->randomized = $min > 0 && $max > 0;
 	}
 
-	/**
-	 * @return Item
-	 */
 	public function getItem(): Item {
 		return $this->item;
 	}
 
-	/**
-	 * @return bool
-	 */
 	public function isRandomized(): bool {
 		return $this->randomized;
 	}
 
-	/**
-	 * @return int
-	 */
 	public function getMin(): int {
 		return $this->min;
 	}
 
-	/**
-	 * @return int
-	 */
 	public function getMax(): int {
 		return $this->max;
 	}
 
 	public function getCount(): int {
-		return $this->randomized ? max(1, mt_rand($this->getMin(), $this->getMax())) : 1;
+		return $this->randomized ? max(1, mt_rand($this->getMin(), $this->getMax())) : $this->getItem()->getCount();
 	}
 
 	public function pull(): Item {

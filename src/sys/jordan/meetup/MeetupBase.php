@@ -3,16 +3,23 @@
 
 namespace sys\jordan\meetup;
 
+use JetBrains\PhpStorm\Pure;
 use pocketmine\block\BlockFactory;
 use pocketmine\crafting\ShapedRecipe;
 use pocketmine\item\ItemFactory;
 use pocketmine\item\VanillaItems;
 use pocketmine\plugin\PluginBase;
+use pocketmine\scheduler\ClosureTask;
 use pocketmine\utils\TextFormat;
+use sys\jordan\core\CoreBase;
+use sys\jordan\core\utils\Scoreboard;
+use sys\jordan\core\utils\TickEnum;
 use sys\jordan\meetup\command\ForceStartCommand;
 use sys\jordan\meetup\command\KillTopCommand;
+use sys\jordan\meetup\command\LobbyCommand;
 use sys\jordan\meetup\command\SpectateCommand;
 use sys\jordan\meetup\game\GameManager;
+use sys\jordan\meetup\kit\KitFactory;
 use sys\jordan\meetup\scenario\ScenarioFactory;
 use sys\jordan\meetup\utils\GoldenHead;
 use sys\jordan\meetup\utils\MeetupPermissions;
@@ -26,24 +33,39 @@ class MeetupBase extends PluginBase {
 	/** @var string */
 	public const GAMEMODE = "Meetup";
 
-	private static MeetupBase $instance;
 
+	private static MeetupBase $instance;
+	protected MeetupHotbarMenu $menu;
+
+	protected KitFactory $kitFactory;
 	protected ScenarioFactory $scenarioFactory;
 
 	protected GameManager $gameManager;
 	protected WorldManager $worldManager;
 
+	protected ClosureTask $scoreboardUpdateTask;
+
 	public function onLoad(): void {
 		self::$instance = $this;
+		$this->menu = new MeetupHotbarMenu();
 		MeetupPermissions::register();
 		$this->registerCommands();
-		$this->registerManagers();
 		$this->registerRecipes();
+		$this->scoreboardUpdateTask = new ClosureTask(function (): void {
+			/** @var MeetupPlayer $player */
+			foreach($this->getServer()->getOnlinePlayers() as $player) {
+				if(!$player->inGame()) {
+					$player->getScoreboard()->setLineArray($this->getScoreboardData($player));
+				}
+			}
+		});
 	}
 
 	public function onEnable(): void {
+		$this->registerManagers();
 		$this->registerLobby();
 		(new MeetupListener($this))->register();
+		$this->getScheduler()->scheduleRepeatingTask($this->scoreboardUpdateTask, TickEnum::SECOND * 5);
 		$this->getLogger()->info(TextFormat::GREEN . "{$this->getDescription()->getFullName()} has been enabled!");
 	}
 
@@ -55,6 +77,7 @@ class MeetupBase extends PluginBase {
 		$this->getServer()->getCommandMap()->registerAll("meetup", [
 			new ForceStartCommand($this),
 			new KillTopCommand($this),
+			new LobbyCommand($this),
 			new SpectateCommand($this)
 		]);
 	}
@@ -69,9 +92,11 @@ class MeetupBase extends PluginBase {
 	}
 
 	public function registerManagers(): void {
+		$this->kitFactory = new KitFactory($this);
 		$this->scenarioFactory = new ScenarioFactory();
-		$this->gameManager = new GameManager($this);
 		$this->worldManager = new WorldManager($this);
+		/** initiate GameManager last as it relies on KitFactory and WorldManager */
+		$this->gameManager = new GameManager($this);
 	}
 
 	public function registerRecipes(): void {
@@ -87,6 +112,10 @@ class MeetupBase extends PluginBase {
 		return self::$instance;
 	}
 
+	public function getMenu(): MeetupHotbarMenu {
+		return $this->menu;
+	}
+
 	/**
 	 * @return GameManager
 	 */
@@ -99,6 +128,28 @@ class MeetupBase extends PluginBase {
 	 */
 	public function getWorldManager(): WorldManager {
 		return $this->worldManager;
+	}
+
+	public function sendScoreboard(MeetupPlayer $player): void {
+		$player->getScoreboard()->send(self::PREFIX . TextFormat::WHITE . " - " . CoreBase::SECONDARY_COLOR . self::GAMEMODE, Scoreboard::SLOT_SIDEBAR, Scoreboard::SORT_ASCENDING);
+		$player->getScoreboard()->setLineArray($this->getScoreboardData($player));
+	}
+
+	/**
+	 * @return string[]
+	 */
+	#[Pure]
+	public function getScoreboardData(MeetupPlayer $player): array {
+		$padding = str_repeat(" ", 3);
+		return [
+			($line = str_repeat("-", 18)),
+			TextFormat::WHITE . "Name: " . TextFormat::YELLOW . $player->getName() . $padding,
+			TextFormat::WHITE . "Rating: " . "{$player->getRating()->getColor()}{$player->getRating()->getRank()}",
+			"",
+			TextFormat::WHITE . "Playing: " . TextFormat::YELLOW . $this->getGameManager()->getPlaying() . $padding,
+			TextFormat::WHITE . "Online: " . TextFormat::YELLOW . count($this->getServer()->getOnlinePlayers()) . $padding,
+			$line
+		];
 	}
 
 }

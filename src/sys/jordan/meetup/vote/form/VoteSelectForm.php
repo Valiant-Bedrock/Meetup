@@ -6,41 +6,45 @@ namespace sys\jordan\meetup\vote\form;
 
 use pocketmine\utils\TextFormat;
 use sys\jordan\core\CoreBase;
-use sys\jordan\core\CorePlayer;
 use sys\jordan\core\form\elements\Button;
 use sys\jordan\core\form\SimpleForm;
-use sys\jordan\meetup\game\Game;
-use sys\jordan\meetup\utils\GameTrait;
+use sys\jordan\meetup\MeetupPlayer;
 use sys\jordan\meetup\vote\VoteManager;
 use sys\jordan\meetup\vote\VoteOption;
 
 class VoteSelectForm extends SimpleForm {
 
-	use GameTrait;
-
-	public function __construct(VoteManager $voteManager) {
-		parent::__construct("Vote Select", "", $this->create($voteManager));
+	public function __construct(VoteManager $manager) {
+		parent::__construct("Vote Select", "", $this->create($manager));
 	}
 
 	/**
 	 * @return Button[]
 	 */
-	public function create(VoteManager $voteManager): array {
+	public function create(VoteManager $manager): array {
 		return array_map(
-			fn(VoteOption $option): Button => $this->createButton($option),
-			$voteManager->getOptions()
+			fn(VoteOption $option): Button => $this->createButton($manager, $option),
+			$manager->getOptions()
 		);
 	}
 
-	public function createButton(VoteOption $option): Button {
+	public function createButton(VoteManager $manager, VoteOption $option): Button {
 		$button = new Button(
-			CoreBase::SECONDARY_COLOR . $option->getName() . TextFormat::GRAY . "(" . TextFormat::YELLOW . $option->getVotes() . TextFormat::GRAY . ")",
-			static function (CorePlayer $player, $data) use($option): void {
-
+			CoreBase::PRIMARY_COLOR . $option->getName() . TextFormat::GRAY . " (" . CoreBase::SECONDARY_COLOR . count($option->getVotes()) . TextFormat::GRAY . ")",
+			static function (MeetupPlayer $player) use($option, $manager): void {
+				$message = TextFormat::GREEN . "Successfully voted for {$option->getName()}!";
+				if($manager->hasVoted($player)) {
+					$selectedOption = $manager->getVote($player);
+					$selectedOption->removeVote($player);
+					$message = TextFormat::YELLOW . "Successfully changed vote from {$selectedOption->getName()} to {$option->getName()}!";
+				}
+				$option->addVote($player);
+				$player->notify($message, TextFormat::GREEN);
 			}
 		);
 		if($option->hasScenario() && ($scenario = $option->getScenario())->hasImage()) {
 			$button->addImage(Button::IMAGE_TYPE_PATH, $scenario->getImageUrl());
 		}
+		return $button;
 	}
 }

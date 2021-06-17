@@ -14,9 +14,10 @@ class VoteManager {
 
 	use GameTrait;
 
-	private static VoteOption $NONE;
+	private static VoteOption $VANILLA;
 	/** @var VoteOption[] */
 	private array $options;
+	protected VotingHotbarMenu $menu;
 
 	/**
 	 * VoteManager constructor.
@@ -25,9 +26,17 @@ class VoteManager {
 	public function __construct(Game $game) {
 		$this->setGame($game);
 		$this->options = [
-			...array_map(static fn(Scenario $scenario): VoteOption => new VoteOption($scenario->getName(), $scenario), DefaultScenarios::getAll()),
-			(self::$NONE = new VoteOption("None"))
+			...array_values(array_map(static fn(Scenario $scenario): VoteOption => new VoteOption($scenario->getName(), $scenario), DefaultScenarios::getAll())),
+			(self::$VANILLA = new VoteOption("Vanilla"))
 		];
+		$this->menu = new VotingHotbarMenu;
+	}
+
+	/**
+	 * @return VotingHotbarMenu
+	 */
+	public function getMenu(): VotingHotbarMenu {
+		return $this->menu;
 	}
 
 	/**
@@ -35,6 +44,12 @@ class VoteManager {
 	 */
 	public function getOptions(): array {
 		return $this->options;
+	}
+
+	public function giveItems(): void {
+		foreach($this->getGame()->getPlayerManager()->getPlayers() as $player) {
+			$this->getMenu()->give($player);
+		}
 	}
 
 	public function hasVoted(MeetupPlayer $player): bool {
@@ -54,12 +69,12 @@ class VoteManager {
 	 */
 	public function check(int $count = 1): array {
 		usort($this->options, static fn (VoteOption $first, VoteOption $second): int => $first->getVotes() <=> $second->getVotes());
-		if(($this->options[array_key_first($this->options)]) === self::$NONE) {
+		if(($this->options[array_key_first($this->options)]) === self::$VANILLA) {
 			return [];
 		}
 		return array_map(
 			static fn(VoteOption $option): Scenario => $option->getScenario(),
-			array_slice(array_filter($this->options, static fn(VoteOption $option): bool => $option === self::$NONE), 0, $count)
+			array_slice(array_filter($this->options, static fn(VoteOption $option): bool => $option === self::$VANILLA), 0, $count)
 		);
 	}
 

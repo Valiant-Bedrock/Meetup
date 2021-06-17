@@ -15,11 +15,7 @@ class Switcheroo extends Scenario {
 		parent::__construct("Switcheroo", "Hitting a player with a projectile (snowballs, arrows, etc.) will cause the thrower to switch positions with the player hit");
 	}
 
-	public function onAdd(Game $game): void {
+	public function onAdd(Game $game): void {}
 
-	}
-
-	public function onRemove(Game $game): void {
-
-	}
+	public function onRemove(Game $game): void {}
 }

@@ -29,12 +29,13 @@ class SpectateCommand extends BaseUserCommand {
 	 */
 	public function onExecute(CommandSender|MeetupPlayer $sender, array $args): string {
 		if($sender->inGame()) {
-			if($sender instanceof MeetupPlayer && $sender->getGame()->getSpectatorManager()->isSpectator($sender)) {
+			if($sender instanceof MeetupPlayer && (!$sender->inGame() || ($sender->inGame() && ($isSpectator = $sender->getGame()->getSpectatorManager()->isSpectator($sender))))) {
 				if(isset($args[0])) {
 					$player = $sender->getServer()->getPlayerByPrefix($args[0]);
 					if($player instanceof MeetupPlayer) {
 						if($player->inGame()) {
 							if($player->getGame()->getPlayerManager()->isPlayer($player)) {
+								if(!$isSpectator) $player->getGame()->getSpectatorManager()->add($sender);
 								$sender->teleport($player->getLocation());
 								return TextFormat::GREEN . "Now spectating: " . TextFormat::GOLD . $player->getName();
 							}

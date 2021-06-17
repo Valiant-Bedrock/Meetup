@@ -40,6 +40,12 @@ class VoteOption {
 		$this->votes[$player->getUniqueId()->toString()] = true;
 	}
 
+	public function removeVote(MeetupPlayer $player): void {
+		if($this->hasVote($player)) {
+			unset($this->votes[$player->getUniqueId()->toString()]);
+		}
+	}
+
 	public function hasVote(MeetupPlayer $player): bool {
 		return isset($this->votes[$player->getUniqueId()->toString()]);
 	}

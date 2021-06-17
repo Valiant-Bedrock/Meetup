@@ -22,8 +22,7 @@ class GameScoreboard {
 	 */
 	public function __construct(Game $game) {
 		$this->setGame($game);
-		self::$SCOREBOARD_LINE = TextFormat::WHITE . str_repeat("-", 18);
-		self::$PADDING = str_repeat(" ", 7);
+		self::$SCOREBOARD_LINE = TextFormat::WHITE . str_repeat("-", 17);
 
 	}
 
@@ -38,12 +37,10 @@ class GameScoreboard {
 	public function getData(MeetupPlayer $player): array {
 		$data =  [
 			self::$SCOREBOARD_LINE,
-			TextFormat::WHITE . "Time: " . TextFormat::YELLOW . $this->game->getFormattedTime() . self::$PADDING,
-			TextFormat::WHITE . "Players: " . TextFormat::YELLOW . count($this->game->getPlayerManager()->getPlayers()) . self::$PADDING,
-			TextFormat::WHITE . "Kill Count: " . TextFormat::YELLOW . $this->game->getEliminationManager()->getEliminations($player). self::$PADDING,
-			TextFormat::WHITE . "Border: " . TextFormat::YELLOW . $this->game->getBorder()->getSize() . self::$PADDING,
-			TextFormat::WHITE . "CPS: " . TextFormat::YELLOW . $player->getClicksPerSecond()  . self::$PADDING,
-			TextFormat::WHITE . "Ping: " . TextFormat::YELLOW . $player->getNetworkSession()->getPing()  . self::$PADDING,
+			TextFormat::WHITE . " Time: " . TextFormat::YELLOW . $this->game->getFormattedTime(),
+			TextFormat::WHITE . " Playing: " . TextFormat::YELLOW . count($this->game->getPlayerManager()->getPlayers()) . TextFormat::WHITE . "/" . TextFormat::YELLOW . $this->game->getPlayerManager()->getStartingCount(),
+			TextFormat::WHITE . " Kill Count: " . TextFormat::YELLOW . $this->game->getEliminationManager()->getEliminations($player),
+			TextFormat::WHITE . " Border: " . TextFormat::YELLOW . $this->game->getBorder()->getSize(),
 		];
 		if($player->getScoreboardExtradata()->hasData()) {
 			array_push($data, ...$player->getScoreboardExtraData()->getData());

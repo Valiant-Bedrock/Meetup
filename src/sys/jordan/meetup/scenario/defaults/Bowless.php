@@ -13,11 +13,7 @@ class Bowless extends Scenario {
 		parent::__construct("Bowless", "If enabled, no bows will be able to be used during the game");
 	}
 
-	public function onAdd(Game $game): void {
-		// TODO: Implement onAdd() method.
-	}
+	public function onAdd(Game $game): void {}
 
-	public function onRemove(Game $game): void {
-		// TODO: Implement onRemove() method.
-	}
+	public function onRemove(Game $game): void {}
 }

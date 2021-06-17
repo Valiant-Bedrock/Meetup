@@ -13,11 +13,7 @@ class NoClean extends Scenario {
 		parent::__construct("No-Clean", "Players are given 15 seconds of invulnerability. This can be nullified by hitting other players.");
 	}
 
-	public function onAdd(Game $game): void {
-		// TODO: Implement onAdd() method.
-	}
+	public function onAdd(Game $game): void {}
 
-	public function onRemove(Game $game): void {
-		// TODO: Implement onRemove() method.
-	}
+	public function onRemove(Game $game): void {}
 }

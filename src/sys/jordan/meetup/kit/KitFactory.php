@@ -15,23 +15,27 @@ use sys\jordan\meetup\utils\MeetupBaseTrait;
 use sys\jordan\meetup\utils\MeetupUtilities;
 
 class KitFactory {
-
 	use FileTrait, MeetupBaseTrait;
 
-	/** @var Kit[] */
-	private array $kits = [];
+	public static KitFactory $instance;
 
 	public static Kit $DEFAULT_KIT;
+	/** @var Kit[] */
+	private array $kits = [];
 
 	/**
 	 * KitFactory constructor.
 	 * @param MeetupBase $plugin
 	 */
 	public function __construct(MeetupBase $plugin) {
+		self::$instance = $this;
 		$this->setPlugin($plugin);
 		$plugin->saveResource("kits.json");
 		$this->setFile(new Config($plugin->getDataFolder() . "kits.json"));
 		$this->load();
+	}
+
+	public function load(): void {
 		self::$DEFAULT_KIT = new Kit(
 			"Meetup",
 			[
@@ -56,12 +60,14 @@ class KitFactory {
 				new KitItem(VanillaItems::ARROW()->setCount(64)),
 			]
 		);
+//		foreach($this->getFile()->getAll() as $name => $data) {
+//
+//		}
+		$this->addKit(self::$DEFAULT_KIT);
 	}
 
-	public function load(): void {
-		foreach($this->getFile()->getAll() as $name => $data) {
-
-		}
+	public static function getInstance(): KitFactory {
+		return self::$instance;
 	}
 
 	/**
@@ -73,6 +79,10 @@ class KitFactory {
 
 	public function getKit(string $name): ?Kit {
 		return $this->kits[$name] ?? null;
+	}
+
+	public function getRandom(): ?Kit {
+		return $this->kits[array_rand($this->kits)] ?? null;
 	}
 
 	public function addKit(Kit $kit): void {

@@ -18,6 +18,7 @@ class WorldManager implements Loadable {
 
 	/** @var string */
 	public const WORLD_DIRECTORY = "worlds";
+	public const IN_USE_DIRECTORY = "temp";
 	public static string $TARGET_DIRECTORY;
 
 	/** @var MeetupWorldData[] */
@@ -29,7 +30,7 @@ class WorldManager implements Loadable {
 	 */
 	public function __construct(MeetupBase $plugin) {
 		$this->setPlugin($plugin);
-		self::$TARGET_DIRECTORY = $plugin->getServer()->getDataPath() . self::WORLD_DIRECTORY . DIRECTORY_SEPARATOR . "temp";
+		self::$TARGET_DIRECTORY = $plugin->getServer()->getDataPath() . self::WORLD_DIRECTORY . DIRECTORY_SEPARATOR . self::IN_USE_DIRECTORY . DIRECTORY_SEPARATOR;
 		$this->load();
 		$this->clear();
 	}
@@ -41,6 +42,13 @@ class WorldManager implements Loadable {
 	 */
 	public function getAll(): array {
 		return $this->worlds;
+	}
+
+	public function getRandom(): ?MeetupWorldData {
+		if(count($this->worlds) <= 0) {
+			return null;
+		}
+		return $this->worlds[array_rand($this->worlds)] ?? null;
 	}
 
 	public function load(): void {
@@ -63,20 +71,13 @@ class WorldManager implements Loadable {
 		}
 	}
 
-	public function create(string $basename): World|null {
-		$worldData = $this->worlds[strtolower($basename)] ?? null;
-		if($worldData instanceof MeetupWorldData) {
-			$id = $worldData->generateUniqueId();
-			self::copy($worldData->getPath(), self::$TARGET_DIRECTORY . $id);
-			// the worlds should never have to be auto-upgraded, but just in case
-			$this->getPlugin()->getServer()->getWorldManager()->loadWorld($id, true);
-			return $this->getPlugin()->getServer()->getWorldManager()->getWorldByName($id);
-		}
-		return null;
-	}
-
-	public function remove(World $world): void {
-
+	public function create(MeetupWorldData $data): ?World {
+		$id = $data->generateUniqueId();
+		self::copy($data->getPath(), self::$TARGET_DIRECTORY . $id);
+		// the worlds should never have to be auto-upgraded, but just in case
+		$name = self::IN_USE_DIRECTORY . DIRECTORY_SEPARATOR . $id;
+		$this->getPlugin()->getServer()->getWorldManager()->loadWorld($name, true);
+		return $this->getPlugin()->getServer()->getWorldManager()->getWorldByName($name);
 	}
 
 	public static function copy(string $source, string $destination): void {

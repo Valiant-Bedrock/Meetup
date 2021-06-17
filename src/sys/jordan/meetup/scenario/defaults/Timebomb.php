@@ -17,17 +17,7 @@ class Timebomb extends Scenario {
 		parent::__construct("Timebomb", "Upon death, a player's items will be dropped into a chest along with a golden head");
 	}
 
-	/**
-	 * @param Game $game
-	 */
-	public function onAdd(Game $game): void {
+	public function onAdd(Game $game): void {}
 
-	}
-
-	/**
-	 * @param Game $game
-	 */
-	public function onRemove(Game $game): void {
-
-	}
+	public function onRemove(Game $game): void {}
 }

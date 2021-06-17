@@ -4,6 +4,8 @@
 namespace sys\jordan\meetup\spectator;
 
 
+use pocketmine\player\GameMode;
+use pocketmine\Server;
 use pocketmine\utils\TextFormat;
 use sys\jordan\meetup\game\Game;
 use sys\jordan\meetup\MeetupBase;
@@ -11,8 +13,9 @@ use sys\jordan\meetup\MeetupPlayer;
 use sys\jordan\meetup\utils\GameTrait;
 
 class SpectatorManager {
-
 	use GameTrait;
+
+	protected SpectatorEventHandler $handler;
 
 	/** @var MeetupPlayer[] */
 	private array $spectators = [];
@@ -23,6 +26,7 @@ class SpectatorManager {
 	 */
 	public function __construct(Game $game) {
 		$this->setGame($game);
+		$this->handler = new SpectatorEventHandler($game);
 	}
 
 	/**
@@ -30,6 +34,10 @@ class SpectatorManager {
 	 */
 	public function getSpectators(): array {
 		return $this->spectators;
+	}
+
+	public function getHandler(): SpectatorEventHandler {
+		return $this->handler;
 	}
 
 	/**
@@ -47,7 +55,7 @@ class SpectatorManager {
 	 * @param MeetupPlayer $player
 	 */
 	public function setup(MeetupPlayer $player): void {
-
+		$player->setGamemode(GameMode::SPECTATOR());
 	}
 
 	/**
@@ -57,6 +65,16 @@ class SpectatorManager {
 		if($this->isSpectator($player)) {
 			unset($this->spectators[$player->getUniqueId()->toString()]);
 		}
+	}
+
+	public function join(MeetupPlayer $player): void {
+		$this->add($player);
+	}
+
+	public function quit(MeetupPlayer $player): void {
+		$this->remove($player);
+		$player->teleport(Server::getInstance()->getWorldManager()->getDefaultWorld()->getSafeSpawn());
+		$player->setGame();
 	}
 
 	/**

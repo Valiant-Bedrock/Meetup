@@ -5,11 +5,7 @@ namespace sys\jordan\meetup;
 
 
 use JetBrains\PhpStorm\Pure;
-use pocketmine\block\BlockLegacyIds;
-use pocketmine\block\utils\SkullType;
-use pocketmine\block\VanillaBlocks;
 use pocketmine\entity\Location;
-use pocketmine\math\Facing;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\player\PlayerInfo;
@@ -17,6 +13,7 @@ use pocketmine\Server;
 use sys\jordan\core\CorePlayer;
 use sys\jordan\meetup\game\Game;
 use sys\jordan\meetup\game\task\NoCleanTask;
+use sys\jordan\meetup\rating\PlayerRating;
 use sys\jordan\meetup\utils\GameTrait;
 use sys\jordan\meetup\utils\ScoreboardExtraData;
 
@@ -24,13 +21,14 @@ class MeetupPlayer extends CorePlayer {
 
 	use GameTrait;
 
-
 	protected ?NoCleanTask $noCleanTask = null;
 	protected ScoreboardExtraData $scoreboardExtraData;
+	protected PlayerRating $rating;
 
 	public function __construct(Server $server, NetworkSession $session, PlayerInfo $playerInfo, bool $authenticated, Location $spawnLocation, ?CompoundTag $namedtag) {
 		parent::__construct($server, $session, $playerInfo, $authenticated, $spawnLocation, $namedtag);
-		$this->scoreboardExtraData = new ScoreboardExtraData();
+		$this->scoreboardExtraData = new ScoreboardExtraData;
+		$this->rating = new PlayerRating; //TODO: Load from data
 	}
 
 	#[Pure]
@@ -56,6 +54,10 @@ class MeetupPlayer extends CorePlayer {
 
 	public function getScoreboardExtraData(): ScoreboardExtraData {
 		return $this->scoreboardExtraData;
+	}
+
+	public function getRating(): PlayerRating {
+		return $this->rating;
 	}
 
 	public function processMostRecentMovements(): void {

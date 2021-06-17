@@ -23,7 +23,7 @@ class MeetupWorldData {
 	}
 
 	public function generateUniqueId(): string {
-		return uniqid("$name-", true);
+		return uniqid("$this->name-", true);
 	}
 
 }
