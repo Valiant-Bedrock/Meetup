@@ -50,4 +50,8 @@ class VoteOption {
 		return isset($this->votes[$player->getUniqueId()->toString()]);
 	}
 
+	public function clear(): void {
+		$this->votes = [];
+	}
+
 }

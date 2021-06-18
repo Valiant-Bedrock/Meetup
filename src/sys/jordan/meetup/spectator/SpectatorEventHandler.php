@@ -12,6 +12,7 @@ use pocketmine\event\player\PlayerExhaustEvent;
 use pocketmine\event\player\PlayerItemUseEvent;
 use pocketmine\event\player\PlayerQuitEvent;
 use sys\jordan\meetup\game\Game;
+use sys\jordan\meetup\MeetupPlayer;
 use sys\jordan\meetup\utils\GameTrait;
 
 class SpectatorEventHandler {
@@ -22,15 +23,21 @@ class SpectatorEventHandler {
 	}
 
 	public function handleChat(PlayerChatEvent $event): void {
-
+		/** @var MeetupPlayer $player */
+		$player = $event->getPlayer();
+		$this->getGame()->chat($player, $event, true);
 	}
 
 	public function handleQuit(PlayerQuitEvent $event): void {
-
+		/** @var MeetupPlayer $player */
+		$player = $event->getPlayer();
+		$this->getGame()->getSpectatorManager()->quit($player);
 	}
 
 	public function handleBreak(BlockBreakEvent $event): void {
-
+		/** @var MeetupPlayer $player */
+		$player = $event->getPlayer();
+		$event->cancel();
 	}
 
 	public function handleDamage(EntityDamageEvent $event): void {
@@ -38,7 +45,9 @@ class SpectatorEventHandler {
 	}
 
 	public function handleExhaust(PlayerExhaustEvent $event): void {
-
+		/** @var MeetupPlayer $player */
+		$player = $event->getPlayer();
+		$event->cancel();
 	}
 
 	public function handleRegainHealth(EntityRegainHealthEvent $event): void {
@@ -46,6 +55,8 @@ class SpectatorEventHandler {
 	}
 
 	public function handleItemUse(PlayerItemUseEvent $event): void {
-
+		/** @var MeetupPlayer $player */
+		$player = $event->getPlayer();
+		$event->cancel();
 	}
 }

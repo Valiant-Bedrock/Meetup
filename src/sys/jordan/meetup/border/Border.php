@@ -7,39 +7,40 @@ namespace sys\jordan\meetup\border;
 use JetBrains\PhpStorm\Pure;
 use pocketmine\block\Block;
 use pocketmine\block\BlockLegacyIds;
+use pocketmine\block\utils\DyeColor;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\utils\TextFormat;
 use pocketmine\world\format\Chunk;
 use pocketmine\world\Position;
 use pocketmine\world\utils\SubChunkExplorer;
-use pocketmine\world\utils\SubChunkExplorerStatus;
 use pocketmine\world\World;
+use sys\jordan\meetup\game\Game;
 use sys\jordan\meetup\MeetupBase;
 use sys\jordan\meetup\MeetupPlayer;
 
+use sys\jordan\meetup\utils\GameTrait;
 use sys\jordan\meetup\world\WorldManager;
 use function floor, abs;
 use function mt_rand;
 
 class Border {
+	use GameTrait;
 
 	/** @var int */
-	public const WALL_HEIGHT = 3;
-
+	public const WALL_HEIGHT = 4;
 	/** @var string */
-	public const PREFIX = TextFormat::RED . "[Border]";
+	public const PREFIX = TextFormat::RED . "Border" . TextFormat::WHITE . " » ";
 
-	private World $world;
-
+	protected Block $block;
 	/** The full block ID of the block to place */
-	private int $fullBlockId;
+	protected int $fullBlockId;
 
 	/**
 	 * A list of all of the passable blocks
 	 * that the border can go through
 	 */
-	private array $passable = [
+	protected array $passable = [
 		BlockLegacyIds::AIR => true,
 		BlockLegacyIds::DOUBLE_PLANT => true,
 		BlockLegacyIds::LEAVES => true,
@@ -58,38 +59,34 @@ class Border {
 	 * A list of all of the blocks that the player
 	 * is disallowed from being teleported on
 	 */
-	private array $disallowedGround = [
+	protected array $disallowedGround = [
 		BlockLegacyIds::WATER => true,
 		BlockLegacyIds::LAVA => true,
 		BlockLegacyIds::FLOWING_WATER => true,
 		BlockLegacyIds::FLOWING_LAVA => true
 	];
 
+	/** The time (in seconds) until the next border shrink */
+	protected int $nextShrinkTime = -1;
 	/** The current size of the border */
-	private int $size;
+	protected int $size;
 	/** The array index of the current border size */
-	private int $borderIndex = 0;
-
-	/**
-	 * @var int[]
-	 */
-	private array $borders = [
-		200,
-		100,
-		50,
-		25,
-		10,
-		5
-	];
+	protected int $borderIndex = 0;
+	/** Whether or not the border can shrink further */
+	protected bool $canShrink = true;
 
 	/**
 	 * Border constructor.
+	 * @param Game $game
 	 * @param World $world
+	 * @param BorderInfo $info
 	 */
-	public function __construct(World $world) {
-		$this->world = $world;
-		$this->size = $this->borders[$this->borderIndex];
-		$this->fullBlockId = VanillaBlocks::BEDROCK()->getFullId();
+	public function __construct(Game $game, protected World $world, protected BorderInfo $info) {
+		$this->setGame($game);
+		$this->size = $info->getInitialSize();
+		$this->nextShrinkTime = $info->getShrinkInterval();
+		$this->block = VanillaBlocks::STAINED_CLAY()->setColor(DyeColor::RED());
+		$this->fullBlockId = $this->block->getFullId();
 		$this->create();
 	}
 
@@ -103,6 +100,29 @@ class Border {
 
 	public function getTeleportDistance(): float {
 		return 3.5;
+	}
+
+	public function canShrink(): bool {
+		return $this->canShrink;
+	}
+
+	public function getNextShrinkTime(): int {
+		return $this->nextShrinkTime;
+	}
+
+	public function getFullBlockId(): int {
+		return $this->fullBlockId;
+	}
+
+	#[Pure]
+	public function getScoreboardTime(): string {
+		$min = round($this->nextShrinkTime / 60, 1);
+		$showSeconds = $min < 1;
+		return $this->canShrink ?
+			TextFormat::WHITE . "(" . TextFormat::RED .
+				($showSeconds ? $this->nextShrinkTime : $min) .
+				($showSeconds ?  "s" : "m") .
+			TextFormat::WHITE . ")" : "";
 	}
 
 	#[Pure]
@@ -126,10 +146,22 @@ class Border {
 		return abs($player->getPosition()->getX()) <= $this->getSize() && abs($player->getPosition()->getZ()) <= $this->getSize();
 	}
 
+	public function update(): void {
+		if($this->canShrink && $this->nextShrinkTime-- <= 0) {
+			$this->shrink();
+		}
+	}
+
 	public function shrink(): void {
-		$this->borderIndex++;
-		$this->size = $this->borders[$this->borderIndex];
-		$this->create();
+		if($this->canShrink && ($newSize = $this->info->getSize($this->borderIndex++)) > -1) {
+			$this->size = $newSize;
+			$this->nextShrinkTime = $this->info->getShrinkInterval();
+			$this->create();
+			$this->getGame()->broadcastMessage(self::PREFIX . "The border has shrank to {$this->size}x{$this->size}!");
+			$this->canShrink = $this->info->getSize($this->borderIndex + 1) !== null;
+			if(!$this->canShrink) $this->getGame()->broadcastMessage(self::PREFIX . "The border has finished shrinking! Good luck!");
+		}
+
 	}
 
 	public function create(): void {
@@ -142,17 +174,15 @@ class Border {
 		$minZ = min($z1, $z2);
 		$maxZ = max($z1, $z2);
 		$iterator = new SubChunkExplorer($this->world);
-		$iterator->moveTo($minX, 128, $minZ);
 		for($x = $minX; $x <= $maxX; $x++) {
 			for($z = $minZ; $z <= $maxZ; $z++) {
+				$iterator->moveTo($x, 128, $z);
 				if(!$iterator->currentChunk instanceof Chunk) {
-					$this->getWorld()->orderChunkPopulation($x >> 4, $z >> 4, null)->onCompletion(
-						function() use($x, $z, $iterator): void {
-							$this->setBorderBlock($x, $z, $iterator);
-						},
-						static function() : void {}
-					);
-					continue;
+					$iterator->currentChunk = $this->world->loadChunk($x >> 4, $z >> 4);
+					if(!$iterator->currentChunk === null) {
+						// ouch... these should be pre-generated
+						continue;
+					}
 				}
 				$this->setBorderBlock($x, $z, $iterator);
 			}
@@ -160,14 +190,12 @@ class Border {
 	}
 
 	public function setBorderBlock(int $x, int $z, SubChunkExplorer $iterator): void {
-		$iterator->moveTo($x, 128, $z);
 		$y = $iterator->currentChunk->getHighestBlockAt($x & 0x0f, $z & 0x0f);
-		while($this->isPassable($iterator->currentChunk->getFullBlock($x & 0x0f, $y, $z & 0x0f)) && $y > 1) {
+		while($this->isPassable($iterator->currentChunk->getFullBlock($x & 0x0f, $y, $z & 0x0f) >> Block::INTERNAL_METADATA_BITS) && $y > 1) {
 			$y -= 1;
 		}
 		$y += 1;
-		$iterator->moveTo($x, $y, $z);
-		$iterator->currentSubChunk->setFullBlock($x & 0x0f, $y & 0x0f, $z & 0x0f, $this->fullBlockId);
+		$this->world->setBlockAt($x, $y, $z, $this->block);
 	}
 
 	public function createWall(int $x1, int $x2, int $z1, int $z2): void {
@@ -202,13 +230,19 @@ class Border {
 		$location = $player->getLocation()->asLocation();
 		$location->x = $outsideX ? (($location->getFloorX() <=> 0) * ($this->getSize() - $teleportDistance)) : $location->x;
 		$location->z = $outsideZ ? (($location->getFloorZ() <=> 0) * ($this->getSize() - $teleportDistance)) : $location->z;
+		if($this->getWorld()->isChunkLoaded($location->getFloorX() >> 4, $location->getFloorZ() >> 4)) {
+			if(!$this->getWorld()->loadChunk($location->getFloorX() >> 4, $location->getFloorX() >> 4) instanceof Chunk) {
+				// ouch... this should never happen
+				return;
+			}
+		}
 		$location->y = $this->getWorld()->getHighestBlockAt($location->getFloorX(), $location->getFloorZ()) + 1;
 		$player->teleport($location);
 		$this->sendMessage($player, TextFormat::YELLOW . "You have been teleported inside the border!");
 	}
 
 	public function handleWorld(): void {
-		WorldManager::delete(WorldManager::$TARGET_DIRECTORY . DIRECTORY_SEPARATOR . explode("/", $this->world->getFolderName())[1]);
+		WorldManager::delete(WorldManager::$TARGET_DIRECTORY . DIRECTORY_SEPARATOR . explode(DIRECTORY_SEPARATOR, $this->world->getFolderName())[1]);
 	}
 
 }

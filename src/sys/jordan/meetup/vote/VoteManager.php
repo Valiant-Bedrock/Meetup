@@ -63,6 +63,12 @@ class VoteManager {
 		return null;
 	}
 
+	public function clear(): void {
+		foreach($this->options as $option) {
+			$option->clear();
+		}
+	}
+
 	/**
 	 * @param int $count
 	 * @return Scenario[]

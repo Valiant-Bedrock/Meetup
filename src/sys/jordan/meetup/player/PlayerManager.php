@@ -5,6 +5,7 @@ namespace sys\jordan\meetup\player;
 
 
 use JetBrains\PhpStorm\Pure;
+use pocketmine\event\entity\EntityDamageByEntityEvent;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\player\PlayerDeathEvent;
 use pocketmine\lang\TranslationContainer;
@@ -92,9 +93,10 @@ class PlayerManager {
 			$this->death($player);
 		}
 		$this->remove($player);
-		$player->setImmobile(false);
-		$player->teleport(Server::getInstance()->getWorldManager()->getDefaultWorld()->getSafeSpawn());
-		$player->setGame();
+		$this->getGame()->getPlugin()->setupLobbyPlayer($player);
+		if(count($this->players) <= 0 && !$this->game->getState()->equals(GameState::WAITING())) {
+			$this->game->end();
+		}
 	}
 
 	public function remove(MeetupPlayer $player): void {
@@ -142,22 +144,16 @@ class PlayerManager {
 	public function clear(): void {
 		$spawn = MeetupBase::getInstance()->getServer()->getWorldManager()->getDefaultWorld()->getSafeSpawn();
 		foreach($this->players as $key => $player) {
-			if($player->isOnline()) {
+			if($player instanceof MeetupPlayer) {
+				$player->setGame();
 				$player->teleport($spawn);
+				$this->getGame()->getPlugin()->setupLobbyPlayer($player);
 			}
 			unset($this->players[$key]);
 		}
 	}
 
 	public function end(): void {
-		foreach($this->players as $player) {
-			$player->fullHeal();
-			$player->feed();
-			$player->getInventory()->clearAll();
-			$player->getArmorInventory()->clearAll();
-			$player->getHungerManager()->setEnabled(false);
-			$player->setRegeneration(true);
-		}
 		$this->game->getLogger()->info(TextFormat::YELLOW . "Clearing players...");
 		$this->clear();
 	}
@@ -183,7 +179,10 @@ class PlayerManager {
 			$player->getArmorInventory()->clearAll();
 			$player->sendTitle(TextFormat::RED . "You died!", TextFormat::YELLOW . "Use /lobby to leave this match and enter a new one!");
 		}
-
+		/** @var MeetupPlayer $damager */
+		if($event instanceof EntityDamageByEntityEvent && ($damager = $event->getDamager()) instanceof MeetupPlayer) {
+			$this->getGame()->getEliminationManager()->addElimination($damager);
+		}
 		$server = Server::getInstance();
 		$deathMessage = PlayerDeathEvent::deriveMessage($player->getName(), $event);
 		$parameters = [];
@@ -196,7 +195,7 @@ class PlayerManager {
 			$parameters[$i] = $name;
 		}
 
-		$this->game->broadcastMessage($this->getGame()->getPlugin()->getServer()->getLanguage()->translate(new TranslationContainer(TextFormat::WHITE . $deathMessage->getText(), $parameters)));
+		$this->game->broadcastMessage(new TranslationContainer($deathMessage->getText(), $parameters));
 	}
 
 }

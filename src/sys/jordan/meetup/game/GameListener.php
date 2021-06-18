@@ -8,6 +8,7 @@ namespace sys\jordan\meetup\game;
 use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityRegainHealthEvent;
+use pocketmine\event\entity\ProjectileHitEvent;
 use pocketmine\event\player\PlayerChatEvent;
 use pocketmine\event\player\PlayerExhaustEvent;
 use pocketmine\event\player\PlayerItemUseEvent;
@@ -18,6 +19,12 @@ use sys\jordan\meetup\MeetupBase;
 use sys\jordan\meetup\MeetupPlayer;
 use sys\jordan\meetup\utils\GameTrait;
 
+/**
+ * Class GameListener
+ * @package sys\jordan\meetup\game
+ *
+ * TODO: Get rid of OOP hell (i.e getGame()->getPlayerManager()->getHandler()->handleChat())
+ */
 class GameListener extends BaseListener {
 
 	use GameTrait;
@@ -43,6 +50,13 @@ class GameListener extends BaseListener {
 			$this->getGame()->getPlayerManager()->getHandler()->handleChat($event);
 		} elseif($this->getGame()->getSpectatorManager()->isSpectator($player)) {
 			$this->getGame()->getSpectatorManager()->getHandler()->handleChat($event);
+		}
+	}
+
+	public function handleProjectileHit(ProjectileHitEvent $event) {
+		$player = $event->getEntity()->getOwningEntity();
+		if($player instanceof MeetupPlayer && $this->getGame()->getPlayerManager()->isPlayer($player)) {
+			$this->getGame()->getPlayerManager()->getHandler()->handleProjectileHit($event);
 		}
 	}
 
@@ -95,7 +109,6 @@ class GameListener extends BaseListener {
 				$this->getGame()->getPlayerManager()->getHandler()->handleRegainHealth($event);
 			} elseif($this->getGame()->getSpectatorManager()->isSpectator($player)) {
 				$this->getGame()->getSpectatorManager()->getHandler()->handleRegainHealth($event);
-
 			}
 		}
 	}

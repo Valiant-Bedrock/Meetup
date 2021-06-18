@@ -7,6 +7,7 @@ namespace sys\jordan\meetup\kit;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\item\VanillaItems;
 use pocketmine\utils\Config;
+use sys\jordan\core\item\CoreItems;
 use sys\jordan\core\utils\FileTrait;
 use sys\jordan\meetup\kit\pool\ItemEntry;
 use sys\jordan\meetup\kit\pool\ItemPool;
@@ -47,6 +48,7 @@ class KitFactory {
 			],
 			[
 				new ItemPool(new ItemEntry(VanillaItems::DIAMOND_SWORD(), 5), new ItemEntry(VanillaItems::IRON_SWORD(), 15)),
+				new KitItem(CoreItems::SNOWBALL()->setCount(16)),
 				new KitItem(VanillaItems::GOLDEN_APPLE(), 3, 6),
 				new KitItem(MeetupUtilities::GOLDEN_HEAD(), 1, 3),
 				new KitItem(VanillaItems::LAVA_BUCKET()),

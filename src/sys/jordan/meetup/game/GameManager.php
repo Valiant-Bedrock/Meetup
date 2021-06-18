@@ -6,6 +6,7 @@ namespace sys\jordan\meetup\game;
 
 
 use JetBrains\PhpStorm\Pure;
+use pocketmine\utils\TextFormat;
 use pocketmine\world\World;
 use sys\jordan\meetup\kit\Kit;
 use sys\jordan\meetup\kit\KitFactory;
@@ -56,11 +57,13 @@ class GameManager {
 
 	public function add(Game $game): void {
 		$this->games[$game->getId()] = $game;
+		$this->getPlugin()->getLogger()->info(TextFormat::YELLOW . "Game created: {$game->__toString()}");
 	}
 
 	public function remove(Game $game, bool $replace = true): void {
 		if(isset($this->games[$game->getId()])) {
 			unset($this->games[$game->getId()]);
+			$this->getPlugin()->getLogger()->info(TextFormat::YELLOW . "Game removed: {$game->__toString()}");
 			if($replace) {
 				$this->setupRandom();
 			}
@@ -70,7 +73,7 @@ class GameManager {
 	public function create(MeetupWorldData $data, Kit $kit): ?Game {
 		$world = $this->getPlugin()->getWorldManager()->create($data);
 		if($world instanceof World) {
-			return new Game($this->getPlugin(), count($this->games), $world, $kit);
+			return new Game($this->getPlugin(), spl_object_id($world), $world, $kit);
 		}
 		return null;
 	}
@@ -79,8 +82,7 @@ class GameManager {
 		$data = $this->getPlugin()->getWorldManager()->getRandom();
 		$kit = KitFactory::getInstance()->getRandom();
 		if($data instanceof MeetupWorldData && $kit instanceof Kit) {
-			$game = $this->create($data, $kit);
-			if($game instanceof Game) {
+			if(($game = $this->create($data, $kit)) instanceof Game) {
 				$this->add($game);
 			} else {
 				$this->getPlugin()->getLogger()->warning("Unable to create random game!");

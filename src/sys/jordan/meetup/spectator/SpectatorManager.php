@@ -5,7 +5,6 @@ namespace sys\jordan\meetup\spectator;
 
 
 use pocketmine\player\GameMode;
-use pocketmine\Server;
 use pocketmine\utils\TextFormat;
 use sys\jordan\meetup\game\Game;
 use sys\jordan\meetup\MeetupBase;
@@ -73,8 +72,7 @@ class SpectatorManager {
 
 	public function quit(MeetupPlayer $player): void {
 		$this->remove($player);
-		$player->teleport(Server::getInstance()->getWorldManager()->getDefaultWorld()->getSafeSpawn());
-		$player->setGame();
+		$this->getGame()->getPlugin()->setupLobbyPlayer($player);
 	}
 
 	/**
@@ -90,6 +88,8 @@ class SpectatorManager {
 		foreach($this->getSpectators() as $key => $spectator) {
 			if($spectator->isOnline()) {
 				$spectator->teleport($spawn);
+				$spectator->setGame();
+				$this->getGame()->getPlugin()->setupLobbyPlayer($spectator);
 			}
 			unset($this->spectators[$key]);
 		}

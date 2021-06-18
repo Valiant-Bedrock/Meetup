@@ -8,9 +8,11 @@ use pocketmine\block\BlockFactory;
 use pocketmine\crafting\ShapedRecipe;
 use pocketmine\item\ItemFactory;
 use pocketmine\item\VanillaItems;
+use pocketmine\player\GameMode;
 use pocketmine\plugin\PluginBase;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\utils\TextFormat;
+use sys\jordan\core\command\OverloadPatcher;
 use sys\jordan\core\CoreBase;
 use sys\jordan\core\utils\Scoreboard;
 use sys\jordan\core\utils\TickEnum;
@@ -52,11 +54,8 @@ class MeetupBase extends PluginBase {
 		$this->registerCommands();
 		$this->registerRecipes();
 		$this->scoreboardUpdateTask = new ClosureTask(function (): void {
-			/** @var MeetupPlayer $player */
-			foreach($this->getServer()->getOnlinePlayers() as $player) {
-				if(!$player->inGame()) {
-					$player->getScoreboard()->setLineArray($this->getScoreboardData($player));
-				}
+			foreach($this->getLobbyPlayers() as $player) {
+				$player->getScoreboard()->setLineArray($this->getScoreboardData($player));
 			}
 		});
 	}
@@ -80,6 +79,7 @@ class MeetupBase extends PluginBase {
 			new LobbyCommand($this),
 			new SpectateCommand($this)
 		]);
+		OverloadPatcher::load($this);
 	}
 
 	public function registerLobby(): void {
@@ -116,18 +116,35 @@ class MeetupBase extends PluginBase {
 		return $this->menu;
 	}
 
-	/**
-	 * @return GameManager
-	 */
 	public function getGameManager(): GameManager {
 		return $this->gameManager;
 	}
 
-	/**
-	 * @return WorldManager
-	 */
 	public function getWorldManager(): WorldManager {
 		return $this->worldManager;
+	}
+
+	/**
+	 * @return MeetupPlayer[]
+	 */
+	public function getLobbyPlayers(): array {
+		return array_filter($this->getServer()->getOnlinePlayers(), fn(MeetupPlayer $current): bool => !$current->inGame());
+	}
+
+	public function setupLobbyPlayer(MeetupPlayer $player): void {
+		$player->setGamemode(GameMode::SURVIVAL());
+		$player->setNameTag($player->getName() . TextFormat::YELLOW . " [{$player->getOS()->getDisplayName()} / {$player->getInputMode()->getDisplayName()}]");
+		$player->getInventory()->clearAll();
+		$player->getArmorInventory()->clearAll();
+		$player->feed();
+		$player->fullHeal();
+		$player->setImmobile(false);
+		$player->getHungerManager()->setEnabled(false);
+		$player->setRegeneration(true);
+		$player->setShowCoordinates(true);
+		$player->teleport($this->getServer()->getWorldManager()->getDefaultWorld()->getSafeSpawn());
+		$this->getMenu()->give($player);
+		$this->sendScoreboard($player);
 	}
 
 	public function sendScoreboard(MeetupPlayer $player): void {

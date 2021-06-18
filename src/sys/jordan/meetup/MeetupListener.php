@@ -6,6 +6,7 @@ namespace sys\jordan\meetup;
 use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\entity\EntityDamageEvent;
+use pocketmine\event\player\PlayerChatEvent;
 use pocketmine\event\player\PlayerCreationEvent;
 use pocketmine\event\player\PlayerDropItemEvent;
 use pocketmine\event\player\PlayerItemUseEvent;
@@ -48,21 +49,14 @@ class MeetupListener extends BaseListener {
 		$event->setJoinMessage(null);
 		/** @var MeetupPlayer $player */
 		$player = $event->getPlayer();
-		$player->setGamemode(GameMode::SURVIVAL());
-		$player->setNameTag($player->getName() . TextFormat::YELLOW . "[{$player->getOSString()}/{$player->getInputString()}");
-		$player->feed();
-		$player->fullHeal();
-		$player->getHungerManager()->setEnabled(false);
-		$player->teleport($this->getPlugin()->getServer()->getWorldManager()->getDefaultWorld()->getSafeSpawn());
-		$player->setShowCoordinates(true);
-		$this->getPlugin()->getMenu()->give($player);
-		$this->getPlugin()->sendScoreboard($player);
+		$this->getPlugin()->setupLobbyPlayer($player);
 	}
 
 	/**
 	 * @param EntityDamageEvent $event
 	 */
 	public function handleDamage(EntityDamageEvent $event) {
+		/** @var MeetupPlayer $player */
 		if(($player = $event->getEntity()) instanceof MeetupPlayer && !$player->inGame()) {
 			$event->cancel();
 		}
@@ -76,6 +70,17 @@ class MeetupListener extends BaseListener {
 		$player = $event->getPlayer();
 		if(!$player->inGame() && !$player->hasPermission(DefaultPermissions::ROOT_OPERATOR)) {
 			$event->cancel();
+		}
+	}
+
+	/**
+	 * @param PlayerChatEvent $event
+	 */
+	public function handleChat(PlayerChatEvent $event) {
+		/** @var MeetupPlayer $player */
+		$player = $event->getPlayer();
+		if(!$player->inGame()) {
+			$event->setRecipients($this->getPlugin()->getLobbyPlayers());
 		}
 	}
 

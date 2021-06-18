@@ -19,6 +19,8 @@ class GameSelectForm extends SimpleForm {
 	}
 
 	/**
+	 * TODO: Instead of saying the game isn't joinable, we could add them as spectators(?)
+	 *
 	 * @param GameManager $manager
 	 * @return Button[]
 	 */
@@ -27,7 +29,7 @@ class GameSelectForm extends SimpleForm {
 			$name = mb_strtoupper($game->getState()->name());
 			$joinable = $game->getState() === GameState::WAITING();
 			return new Button(
-				TextFormat::YELLOW . "Game (" . ($joinable ? TextFormat::GREEN : TextFormat::RED) . $name . TextFormat::YELLOW . ")" .
+				TextFormat::YELLOW . "Game (" . ($joinable ? TextFormat::GREEN : TextFormat::RED) . $name . TextFormat::YELLOW . ") " .
 				TextFormat::WHITE . "[" . TextFormat::YELLOW . $game->getPlayerManager()->getCount() . TextFormat::WHITE . "/" . TextFormat::YELLOW . Game::MAX_PLAYER_COUNT . TextFormat::WHITE . "]\n" .
 				TextFormat::WHITE . "Map: " . TextFormat::YELLOW . $game->getWorld()->getDisplayName() . TextFormat::WHITE . " | Kit: " . TextFormat::YELLOW . $game->getKit()->getName(),
 				static function(MeetupPlayer $player) use($game, $joinable): void {

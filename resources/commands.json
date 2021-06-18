@@ -1,0 +1,36 @@
+{
+  "forcestart": {
+    "overloads": {
+      "default": {
+        "parameters": []
+      }
+    }
+  },
+  "killtop": {
+    "overloads": {
+      "default": {
+        "parameters": []
+      }
+    }
+  },
+  "lobby": {
+    "overloads": {
+      "default": {
+        "parameters": []
+      }
+    }
+  },
+  "spectate": {
+    "overloads": {
+      "player": {
+        "parameters": [
+          {
+            "name": "player",
+            "type": "target",
+            "optional": false
+          }
+        ]
+      }
+    }
+  }
+}

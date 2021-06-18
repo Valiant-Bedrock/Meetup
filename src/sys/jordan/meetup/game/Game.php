@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace sys\jordan\meetup\game;
 
+use JetBrains\PhpStorm\Pure;
 use pocketmine\block\utils\SkullType;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\entity\Entity;
+use pocketmine\event\player\PlayerChatEvent;
 use pocketmine\lang\TranslationContainer;
 use pocketmine\math\Facing;
 use pocketmine\network\mcpe\protocol\AddActorPacket;
@@ -17,6 +19,7 @@ use pocketmine\utils\TextFormat;
 use pocketmine\world\World;
 use sys\jordan\core\utils\TickEnum;
 use sys\jordan\meetup\border\Border;
+use sys\jordan\meetup\border\BorderInfo;
 use sys\jordan\meetup\eliminations\EliminationManager;
 use sys\jordan\meetup\kit\Kit;
 use sys\jordan\meetup\MeetupBase;
@@ -27,11 +30,11 @@ use sys\jordan\meetup\scenario\ScenarioManager;
 use sys\jordan\meetup\spectator\SpectatorManager;
 use sys\jordan\meetup\utils\MeetupBaseTrait;
 use sys\jordan\meetup\vote\VoteManager;
-use sys\jordan\meetup\world\WorldManager;
 
 class Game {
 	use MeetupBaseTrait;
 
+	public const PREFIX = TextFormat::RED . "Game" . TextFormat::WHITE . " » ";
 	/** @var int */
 	public const MAX_PLAYER_COUNT = 100;
 
@@ -67,15 +70,19 @@ class Game {
 	 */
 	public function __construct(MeetupBase $plugin, protected int $id, protected World $world, protected Kit $kit) {
 		$this->setPlugin($plugin);
+		$this->logger = new GameLogger($this);
+
 		$this->setState(GameState::WAITING());
-		$this->border = new Border($world);
+		$this->border = new Border($this, $world, new BorderInfo(200, [100, 50, 25, 10]));
+
+		$world->setTime(World::TIME_FULL);
+		$world->stopTime();
 
 		$this->heartbeat = new ClosureTask(function (): void { $this->update(); });
 		$this->scoreboardHeartbeat = new ClosureTask(function (): void { $this->updateUI(); });
 
 		$this->listener = new GameListener($plugin, $this);
 		$this->listener->register();
-		$this->logger = new GameLogger($this);
 
 		$this->scoreboard = new GameScoreboard($this);
 
@@ -87,7 +94,7 @@ class Game {
 		$this->voteManager = new VoteManager($this);
 
 		$plugin->getScheduler()->scheduleRepeatingTask($this->heartbeat, TickEnum::SECOND);
-		$plugin->getScheduler()->scheduleRepeatingTask($this->scoreboardHeartbeat, 1);
+		$plugin->getScheduler()->scheduleRepeatingTask($this->scoreboardHeartbeat, TickEnum::SECOND);
 	}
 
 	public function getId(): int {
@@ -199,13 +206,10 @@ class Game {
 	}
 
 	public function end(): void {
-		foreach($this->getAll() as $player) {
-			$player->teleport($this->getPlugin()->getServer()->getWorldManager()->getDefaultWorld()->getSafeSpawn());
-		}
 		$this->getPlayerManager()->end();
 		$this->getSpectatorManager()->end();
 		$this->getEliminationManager()->end();
-
+		$this->delete();
 	}
 
 	public function update(): void {
@@ -263,13 +267,13 @@ class Game {
 	public function handlePlaying(): void {
 		$this->time++;
 		$this->getPlayerManager()->check();
+		$this->getBorder()->update();
 	}
 
 	public function handlePostgame(): void {
 		$this->broadcastActionBar(TextFormat::YELLOW . "Game ending in $this->postgame...");
 		if($this->postgame-- <= 0) {
 			$this->end();
-			$this->delete();
 		}
 	}
 
@@ -282,6 +286,15 @@ class Game {
 				TextFormat::WHITE . " | Ping: " . TextFormat::YELLOW . $player->getNetworkSession()->getPing()
 			);
 		}
+	}
+
+	public function chat(MeetupPlayer $player, PlayerChatEvent $event, bool $isSpectator = false): void {
+		$recipients = $isSpectator && !$this->getState()->equals(GameState::POSTGAME()) ? $this->getSpectatorManager()->getSpectators() : $this->getAll();
+		if($isSpectator) {
+			$event->setMessage(TextFormat::GRAY . "[Spectator] " . $event->getMessage());
+		}
+		$event->setRecipients($recipients);
+		$this->getLogger()->info($event->getMessage());
 	}
 
 	public function broadcastTip(string $message): void {
@@ -297,10 +310,11 @@ class Game {
 	}
 
 	public function broadcastMessage(TranslationContainer|string $message, bool $addPrefix = false): void {
-		if($addPrefix && is_string($message)) $message = TextFormat::RED . "Game" . TextFormat::WHITE . " » $message";
+		if($addPrefix && is_string($message)) $message = self::PREFIX . $message;
 		foreach($this->getAll() as $player) {
 			$player->sendMessage($message);
 		}
+		$this->getLogger()->info("[Message Broadcast] " . ($message instanceof TranslationContainer ? $this->plugin->getServer()->getLanguage()->translate($message) : $message));
 	}
 
 	public function broadcastTitle(string $title, string $subtitle = ""): void {
@@ -319,6 +333,7 @@ class Game {
 		foreach($this->getAll() as $player) {
 			$player->notify($message, $color);
 		}
+		$this->getLogger()->info("[Game Notification] $message");
 	}
 
 	public function summonLightning(MeetupPlayer $player): void {
@@ -357,14 +372,24 @@ class Game {
 	}
 
 	public function delete(): void {
+		$this->getLogger()->info(TextFormat::YELLOW . "Cancelling tasks...");
 		$this->heartbeat->getHandler()?->cancel();
 		$this->scoreboardHeartbeat->getHandler()?->cancel();
+		$this->getLogger()->info(TextFormat::YELLOW . "Unregistering listener...");
 		$this->listener->unregister();
+		$this->getLogger()->info(TextFormat::YELLOW . "Handling world...");
 		$this->world->getServer()->getWorldManager()->unloadWorld($this->world);
 		$this->border->handleWorld();
+		$this->getLogger()->info(TextFormat::YELLOW . "Removing from game manager...");
 		$this->getPlugin()->getGameManager()->remove($this);
+		// clean up
 		foreach($this as $key => $value) {
 			unset($this->$key);
 		}
+	}
+
+	#[Pure]
+	public function __toString(): string {
+		return "Game(id=#$this->id,world=[\"{$this->world?->getDisplayName()}\"/\"{$this->world?->getFolderName()}\"])";
 	}
 }

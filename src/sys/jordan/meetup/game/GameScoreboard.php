@@ -40,7 +40,7 @@ class GameScoreboard {
 			TextFormat::WHITE . " Time: " . TextFormat::YELLOW . $this->game->getFormattedTime(),
 			TextFormat::WHITE . " Playing: " . TextFormat::YELLOW . count($this->game->getPlayerManager()->getPlayers()) . TextFormat::WHITE . "/" . TextFormat::YELLOW . $this->game->getPlayerManager()->getStartingCount(),
 			TextFormat::WHITE . " Kill Count: " . TextFormat::YELLOW . $this->game->getEliminationManager()->getEliminations($player),
-			TextFormat::WHITE . " Border: " . TextFormat::YELLOW . $this->game->getBorder()->getSize(),
+			TextFormat::WHITE . " Border: " . TextFormat::YELLOW . "{$this->game->getBorder()->getSize()} {$this->game->getBorder()->getScoreboardTime()}"
 		];
 		if($player->getScoreboardExtradata()->hasData()) {
 			array_push($data, ...$player->getScoreboardExtraData()->getData());

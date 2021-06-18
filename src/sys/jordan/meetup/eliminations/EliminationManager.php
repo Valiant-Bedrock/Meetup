@@ -27,6 +27,13 @@ class EliminationManager {
 		$this->setGame($game);
 	}
 
+	public function addElimination(MeetupPlayer $player): void {
+		if(!isset($this->eliminations[$player->getName()])) {
+			$this->eliminations[$player->getName()] = 0;
+		}
+		$this->eliminations[$player->getName()] = $this->getEliminations($player) + 1;
+	}
+
 	public function setEliminations(MeetupPlayer $player, int $count = 0): void {
 		$this->eliminations[$player->getName()] = $count;
 	}
