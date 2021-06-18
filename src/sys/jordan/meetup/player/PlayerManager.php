@@ -94,7 +94,7 @@ class PlayerManager {
 		}
 		$this->remove($player);
 		$this->getGame()->getPlugin()->setupLobbyPlayer($player);
-		$player->notify(TextFormat::YELLOW . "You have successfully left the game", TextFormat::YELLOW);
+		$player->notify(TextFormat::YELLOW . "You have successfully left the game!", TextFormat::YELLOW);
 		if(count($this->players) <= 0 && !$this->game->getState()->equals(GameState::WAITING())) {
 			$this->game->end();
 		}
