@@ -55,6 +55,8 @@ class SpectatorManager {
 	 */
 	public function setup(MeetupPlayer $player): void {
 		$player->setGamemode(GameMode::SPECTATOR());
+		$player->getScoreboard()->clearLines();
+		$player->setGame($this->game);
 	}
 
 	/**

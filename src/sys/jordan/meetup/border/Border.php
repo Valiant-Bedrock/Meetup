@@ -139,7 +139,7 @@ class Border {
 	}
 
 	public function sendMessage(MeetupPlayer $player, string $message): void {
-		$player->sendMessage(self::PREFIX . " $message");
+		$player->sendMessage(self::PREFIX . $message);
 	}
 
 	public function inside(MeetupPlayer $player): bool {
@@ -157,8 +157,9 @@ class Border {
 			$this->size = $newSize;
 			$this->nextShrinkTime = $this->info->getShrinkInterval();
 			$this->create();
-			$this->getGame()->broadcastMessage(self::PREFIX . "The border has shrank to {$this->size}x{$this->size}!");
-			$this->canShrink = $this->info->getSize($this->borderIndex + 1) !== null;
+			$size = TextFormat::YELLOW . "$this->size";
+			$this->getGame()->broadcastMessage(self::PREFIX . "The border has shrank to $size" . TextFormat::WHITE . "x" . $size);
+			$this->canShrink = $this->info->getSize($this->borderIndex + 1) > 0;
 			if(!$this->canShrink) $this->getGame()->broadcastMessage(self::PREFIX . "The border has finished shrinking! Good luck!");
 		}
 

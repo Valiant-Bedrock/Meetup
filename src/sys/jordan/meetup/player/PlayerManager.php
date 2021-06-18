@@ -86,6 +86,7 @@ class PlayerManager {
 	public function join(MeetupPlayer $player): void {
 		$this->add($player);
 		$player->notify(TextFormat::GREEN . "You have successfully joined the game!", TextFormat::GREEN);
+		$this->game->broadcastMessage(TextFormat::YELLOW . "{$player->getName()} has joined the game!", true);
 	}
 
 	public function quit(MeetupPlayer $player): void {
@@ -95,6 +96,7 @@ class PlayerManager {
 		$this->remove($player);
 		$this->getGame()->getPlugin()->setupLobbyPlayer($player);
 		$player->notify(TextFormat::YELLOW . "You have successfully left the game!", TextFormat::YELLOW);
+		$this->game->broadcastMessage(TextFormat::YELLOW . "{$player->getName()} has left the game!", true);
 		if(count($this->players) <= 0 && !$this->game->getState()->equals(GameState::WAITING())) {
 			$this->game->end();
 		}
