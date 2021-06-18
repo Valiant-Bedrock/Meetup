@@ -13,7 +13,6 @@ use sys\jordan\meetup\scenario\defaults\{
 	Switcheroo,
 	Timebomb
 };
-use pocketmine\utils\RegistryUtils;
 
 /**
  * This doc-block is generated automatically, do not modify it manually.

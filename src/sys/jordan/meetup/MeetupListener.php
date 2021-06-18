@@ -14,9 +14,7 @@ use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\player\PlayerMoveEvent;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\permission\DefaultPermissions;
-use pocketmine\player\GameMode;
 use pocketmine\plugin\Plugin;
-use pocketmine\utils\TextFormat;
 use sys\jordan\core\base\BaseListener;
 
 class MeetupListener extends BaseListener {

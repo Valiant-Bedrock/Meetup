@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace sys\jordan\meetup\command;
 
 use pocketmine\command\CommandSender;
-use pocketmine\network\mcpe\protocol\AvailableCommandsPacket;
 use pocketmine\utils\TextFormat;
 use sys\jordan\core\base\BaseUserCommand;
 use sys\jordan\meetup\MeetupBase;

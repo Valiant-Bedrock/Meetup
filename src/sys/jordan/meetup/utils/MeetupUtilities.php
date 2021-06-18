@@ -9,16 +9,7 @@ use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
 use pocketmine\item\ItemIds;
 use pocketmine\utils\TextFormat;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 use ReflectionClass;
-use function closedir;
-use function copy;
-use function is_dir;
-use function mkdir;
-use function opendir;
-use function readdir;
-use function rmdir;
 
 class MeetupUtilities {
 
