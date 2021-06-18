@@ -33,7 +33,6 @@ class WorldManager implements Loadable {
 		self::$TARGET_DIRECTORY = $plugin->getServer()->getDataPath() . self::WORLD_DIRECTORY . DIRECTORY_SEPARATOR . self::IN_USE_DIRECTORY . DIRECTORY_SEPARATOR;
 		$this->load();
 		$this->clear();
-		//$this->test();
 	}
 
 	/**
@@ -66,48 +65,7 @@ class WorldManager implements Loadable {
 		}
 	}
 
-	public function test(): void {
-		$this->getPlugin()->getLogger()->info("--- Starting file function test ---");
-		$worldInfo = $this->worlds[array_key_first($this->worlds)];
-		$baseDestination = $this->plugin->getServer()->getDataPath() . "worlds" . DIRECTORY_SEPARATOR;
-		$functionalPath = $baseDestination . "{$worldInfo->getName()}-functional";
-		$oopPath = $baseDestination . "{$worldInfo->getName()}-oop";
-		$this->getPlugin()->getLogger()->info("Copying files...");
-		self::copy($worldInfo->getPath(), $oopPath);
-		self::copy($worldInfo->getPath(), $functionalPath);
 
-		$this->getPlugin()->getLogger()->info("Scanning files...");
-		$functionalFiles = scandir($functionalPath);
-		$oopFiles = scandir($oopPath);
-
-		$this->getPlugin()->getLogger()->info("Comparing files...");
-
-		$files = array_diff_assoc($functionalFiles, $oopFiles);
-		if(count($files) > 0) {
-			$count = count($files);
-			$filesString = implode(",", $files);
-			$this->getPlugin()->getLogger()->info("Found $count files that don't match: [$filesString]");
-		} else {
-			$this->getPlugin()->getLogger()->info("All files match");
-		}
-		$functionalHashes = [];
-		$oopHashes = [];
-		foreach($functionalFiles as $functionalFile) {
-			$functionalHashes[$functionalFile] = sha1_file($functionalFile);
-		}
-		foreach($oopFiles as $oopFile) {
-			$oopHashes[$oopFile] = sha1_file($oopFile);
-		}
-		$hashFiles = array_diff_assoc($functionalHashes, $oopHashes);
-		if(count($hashFiles) > 0) {
-			$count = count($hashFiles);
-			$hasFilesString = implode(",", array_keys($hashFiles));
-			$this->getPlugin()->getLogger()->info("Found $count files that don't have matching hashes: [$hasFilesString]");
-		} else {
-			$this->getPlugin()->getLogger()->info("All files match");
-		}
-		$this->getPlugin()->getLogger()->info("-----------------------------------");
-	}
 
 	public function clear(): void {
 		$iterator = new RecursiveDirectoryIterator(self::$TARGET_DIRECTORY, RecursiveDirectoryIterator::SKIP_DOTS);
@@ -146,7 +104,7 @@ class WorldManager implements Loadable {
 	 *
 	 * TODO: Figure out how to get the subdirectory
 	 */
-	public static function oopCopy(string $source, string $destination): void {
+	public static function legacyCopy(string $source, string $destination): void {
 		@mkdir($destination, 0777, true);
 		$iterator = new RecursiveIteratorIterator(
 			new RecursiveDirectoryIterator($source, RecursiveDirectoryIterator::SKIP_DOTS),
