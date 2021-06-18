@@ -132,6 +132,7 @@ class MeetupBase extends PluginBase {
 	}
 
 	public function setupLobbyPlayer(MeetupPlayer $player): void {
+		$player->setGame();
 		$player->setGamemode(GameMode::SURVIVAL());
 		$player->setNameTag($player->getName() . TextFormat::YELLOW . " [{$player->getOS()->getDisplayName()} / {$player->getInputMode()->getDisplayName()}]");
 		$player->getInventory()->clearAll();
