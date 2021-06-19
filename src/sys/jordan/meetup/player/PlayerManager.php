@@ -19,6 +19,7 @@ use sys\jordan\meetup\MeetupPlayer;
 use sys\jordan\meetup\scenario\DefaultScenarios;
 use sys\jordan\meetup\utils\GameTrait;
 
+use sys\jordan\meetup\vote\form\VoteSelectForm;
 use function array_key_first, count;
 
 class PlayerManager {
@@ -27,7 +28,7 @@ class PlayerManager {
 	/** If enabled, the game won't auto-end with 1 player */
 	public const DEBUG = false;
 	/** The amount of players needed to start the game */
-	public const THRESHOLD = 5;
+	public const THRESHOLD = 10;
 
 	protected PlayerEventHandler $handler;
 
@@ -142,6 +143,15 @@ class PlayerManager {
 		$player->feed();
 		$player->setImmobile();
 		$player->setGame($this->game);
+		switch($this->game->getState()->id()) {
+			case GameState::VOTING()->id():
+				$this->getGame()->getVoteManager()->getMenu()->give($player);
+				$player->sendForm(new VoteSelectForm($this->game->getVoteManager()));
+				break;
+			case GameState::COUNTDOWN()->id():
+				$this->getGame()->getKitManager()->give($player);
+
+		}
 	}
 
 	public function clear(): void {
@@ -157,7 +167,7 @@ class PlayerManager {
 	}
 
 	public function end(): void {
-		$this->game->getLogger()->info(TextFormat::YELLOW . "Clearing players...");
+		$this->game->getLogger()->info(TextFormat::YELLOW . "Cleaning up player manager...");
 		$this->clear();
 	}
 

@@ -16,12 +16,17 @@ use pocketmine\network\mcpe\protocol\PlaySoundPacket;
 use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\utils\TextFormat;
+use pocketmine\world\sound\ClickSound;
+use pocketmine\world\sound\NoteInstrument;
+use pocketmine\world\sound\NoteSound;
+use pocketmine\world\sound\Sound;
 use pocketmine\world\World;
 use sys\jordan\core\utils\TickEnum;
 use sys\jordan\meetup\border\Border;
 use sys\jordan\meetup\border\BorderInfo;
 use sys\jordan\meetup\eliminations\EliminationManager;
 use sys\jordan\meetup\kit\Kit;
+use sys\jordan\meetup\kit\KitManager;
 use sys\jordan\meetup\MeetupBase;
 use sys\jordan\meetup\MeetupPlayer;
 use sys\jordan\meetup\player\PlayerManager;
@@ -36,10 +41,10 @@ class Game {
 
 	public const PREFIX = TextFormat::RED . "Game" . TextFormat::WHITE . " » ";
 	/** @var int */
-	public const MAX_PLAYER_COUNT = 100;
+	public const MAX_PLAYER_COUNT = 50;
 
-	protected int $votingTime = 45;
-	protected int $countdown = 45;
+	protected int $voting = 60;
+	protected int $countdown = 15;
 	protected int $time = 0;
 	protected int $postgame = 15;
 
@@ -47,7 +52,10 @@ class Game {
 
 	protected PlayerManager $playerManager;
 	protected SpectatorManager $spectatorManager;
+
 	protected EliminationManager $eliminationManager;
+	protected KitManager $kitManager;
+
 	protected ScenarioManager $scenarioManager;
 	protected VoteManager $voteManager;
 
@@ -68,7 +76,7 @@ class Game {
 	 * @param World $world
 	 * @param Kit $kit
 	 */
-	public function __construct(MeetupBase $plugin, protected int $id, protected World $world, protected Kit $kit) {
+	public function __construct(MeetupBase $plugin, protected int $id, protected World $world, Kit $kit) {
 		$this->setPlugin($plugin);
 		$this->logger = new GameLogger($this);
 
@@ -90,6 +98,8 @@ class Game {
 		$this->spectatorManager = new SpectatorManager($this);
 
 		$this->eliminationManager = new EliminationManager($this);
+		$this->kitManager = new KitManager($this, $kit);
+
 		$this->scenarioManager = new ScenarioManager($this);
 		$this->voteManager = new VoteManager($this);
 
@@ -103,18 +113,6 @@ class Game {
 
 	public function getBorder(): Border {
 		return $this->border;
-	}
-
-	public function getKit(): Kit {
-		return $this->kit;
-	}
-
-	public function giveKits(): void {
-		foreach($this->getPlayerManager()->getPlayers() as $player) {
-			$kit = $this->getKit()->pull();
-			$player->getInventory()->setContents($kit->getItemContents());
-			$player->getArmorInventory()->setContents($kit->getArmorContents());
-		}
 	}
 
 	public function getWorld(): World {
@@ -132,15 +130,17 @@ class Game {
 	/**
 	 * @return MeetupPlayer[]
 	 */
+	#[Pure]
 	public function getAll(): array {
-		return array_filter(
-			$this->playerManager->getPlayers() + $this->spectatorManager->getSpectators(),
-			fn (MeetupPlayer $player): bool => $player->isConnected()
-		);
+		return ($this->playerManager->getPlayers() + $this->spectatorManager->getSpectators());
 	}
 
 	public function getEliminationManager(): EliminationManager {
 		return $this->eliminationManager;
+	}
+
+	public function getKitManager(): KitManager {
+		return $this->kitManager;
 	}
 
 	public function getScenarioManager(): ScenarioManager {
@@ -201,13 +201,6 @@ class Game {
 		$this->broadcastMessage(TextFormat::GREEN . "The meetup has now started! Good luck!", true);
 	}
 
-	public function end(): void {
-		$this->getPlayerManager()->end();
-		$this->getSpectatorManager()->end();
-		$this->getEliminationManager()->end();
-		$this->delete();
-	}
-
 	public function update(): void {
 		switch($this->getState()->id()) {
 			case GameState::WAITING()->id():
@@ -236,8 +229,8 @@ class Game {
 	}
 
 	public function handleVoting(): void {
-		$this->broadcastActionBar(TextFormat::YELLOW . "Voting will end in $this->votingTime...");
-		if($this->votingTime-- <= 0) {
+		$this->broadcastActionBar(TextFormat::YELLOW . "Voting will end in $this->voting...");
+		if($this->voting-- <= 0) {
 			$scenarios = []; // $this->getVoteManager()->check();
 //			foreach($scenarios as $scenario) {
 //				$this->getScenarioManager()->add($scenario);
@@ -249,15 +242,22 @@ class Game {
 			}
 			$this->broadcastMessage($message, true);
 			$this->setState(GameState::COUNTDOWN());
-			$this->giveKits();
+			$this->getKitManager()->giveAll();
 		}
 	}
 
 	public function handleCountdown(): void {
 		$this->broadcastActionBar(TextFormat::YELLOW . "The game will commence in $this->countdown...");
-		if($this->countdown-- <= 0) {
-			$this->play();
+		if($this->countdown-- <= 5) {
+			if($this->countdown === 0) {
+				$this->play();
+				$sound = new NoteSound(NoteInstrument::PIANO(), 127);
+			} else {
+				$sound = new ClickSound(5);
+			}
+			$this->broadcastSound($sound);
 		}
+
 	}
 
 	public function handlePlaying(): void {
@@ -287,7 +287,7 @@ class Game {
 	public function chat(MeetupPlayer $player, PlayerChatEvent $event, bool $isSpectator = false): void {
 		$recipients = $isSpectator && !$this->getState()->equals(GameState::POSTGAME()) ? $this->getSpectatorManager()->getSpectators() : $this->getAll();
 		if($isSpectator) {
-			$event->setMessage(TextFormat::GRAY . "[Spectator] " . $event->getMessage());
+			$event->setMessage(TextFormat::DARK_GRAY . "[Spectator] " . $event->getMessage());
 		}
 		$event->setRecipients($recipients);
 		$this->getLogger()->info($event->getMessage());
@@ -332,6 +332,17 @@ class Game {
 		$this->getLogger()->info("[Game Notification] $message");
 	}
 
+	public function broadcastSound(Sound $sound): void {
+		foreach($this->getAll() as $player) {
+			$pkt = $sound->encode($player->getLocation());
+			if(count($pkt) > 0) {
+				foreach($pkt as $soundPkt) {
+					$player->getNetworkSession()->sendDataPacket($soundPkt);
+				}
+			}
+		}
+	}
+
 	public function summonLightning(MeetupPlayer $player): void {
 		$location = $player->getLocation();
 		$vector = $location->asVector3();
@@ -365,6 +376,17 @@ class Game {
 				->setFacing(Facing::UP) // ensure that the skull is ground based, rather than wall based
 				->setRotation((floor($player->getLocation()->getYaw() * 16 / 360) + 8) & 0x0f) // map the yaw to [0 - 15] & add 8 to properly orient the head
 		);
+	}
+
+	public function end(): void {
+		$this->getPlayerManager()->end();
+		$this->getSpectatorManager()->end();
+
+		$this->getEliminationManager()->end();
+		$this->getKitManager()->end();
+
+		$this->getVoteManager()->end();
+		$this->delete();
 	}
 
 	public function delete(): void {

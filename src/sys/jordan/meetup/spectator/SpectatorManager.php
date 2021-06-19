@@ -98,7 +98,7 @@ class SpectatorManager {
 	}
 
 	public function end(): void {
-		$this->getGame()->getLogger()->info(TextFormat::YELLOW . "Clearing spectators...");
+		$this->game->getLogger()->info(TextFormat::YELLOW . "Cleaning up spectator manager...");
 		$this->clear();
 	}
 

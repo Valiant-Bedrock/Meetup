@@ -16,9 +16,6 @@ class Kit {
 	 */
 	public function __construct(protected string $name, protected array $armor, protected array $items) {}
 
-	/**
-	 * @return string
-	 */
 	public function getName(): string {
 		return $this->name;
 	}

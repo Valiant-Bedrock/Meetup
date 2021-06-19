@@ -4,6 +4,7 @@
 namespace sys\jordan\meetup\vote;
 
 
+use pocketmine\utils\TextFormat;
 use sys\jordan\meetup\game\Game;
 use sys\jordan\meetup\MeetupPlayer;
 use sys\jordan\meetup\scenario\DefaultScenarios;
@@ -63,12 +64,6 @@ class VoteManager {
 		return null;
 	}
 
-	public function clear(): void {
-		foreach($this->options as $option) {
-			$option->clear();
-		}
-	}
-
 	/**
 	 * @param int $count
 	 * @return Scenario[]
@@ -82,6 +77,17 @@ class VoteManager {
 			static fn(VoteOption $option): Scenario => $option->getScenario(),
 			array_slice(array_filter($this->options, static fn(VoteOption $option): bool => $option === self::$VANILLA), 0, $count)
 		);
+	}
+
+	public function clear(): void {
+		foreach($this as $key => $value) {
+			unset($this->$key);
+		}
+	}
+
+	public function end(): void {
+		$this->game->getLogger()->info(TextFormat::YELLOW . "Cleaning up vote manager...");
+		$this->clear();
 	}
 
 }
