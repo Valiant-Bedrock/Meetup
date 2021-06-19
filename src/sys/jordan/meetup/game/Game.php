@@ -38,7 +38,6 @@ class Game {
 	/** @var int */
 	public const MAX_PLAYER_COUNT = 100;
 
-	protected int $waitTime = 60;
 	protected int $votingTime = 45;
 	protected int $countdown = 45;
 	protected int $time = 0;
