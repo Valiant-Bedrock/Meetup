@@ -27,7 +27,7 @@
           {
             "name": "player",
             "type": "target",
-            "optional": false
+            "optional": true
           }
         ]
       }

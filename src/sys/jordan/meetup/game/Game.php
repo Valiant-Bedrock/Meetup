@@ -38,6 +38,7 @@ class Game {
 	/** @var int */
 	public const MAX_PLAYER_COUNT = 100;
 
+	protected int $waitTime = 60;
 	protected int $votingTime = 45;
 	protected int $countdown = 45;
 	protected int $time = 0;
@@ -179,12 +180,8 @@ class Game {
 		return gmdate(($this->time >= TickEnum::HOUR ? "H:" : "") . "i:s", $this->time);
 	}
 
-	/**
-	 * Main function to transition Meetup from
-	 * WAITING -> VOTING
-	 */
 	public function start(): void {
-		$this->notify(TextFormat::GREEN . "The player threshold has been met! Voting will now commence!", TextFormat::GREEN);
+		$this->notify(TextFormat::GREEN . "The player threshold has been met!", TextFormat::GREEN);
 		$this->setState(GameState::VOTING());
 		$this->getPlayerManager()->start();
 		$this->getVoteManager()->giveItems();
