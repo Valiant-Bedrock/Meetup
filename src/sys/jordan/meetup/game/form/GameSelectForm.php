@@ -15,7 +15,7 @@ use sys\jordan\meetup\MeetupPlayer;
 class GameSelectForm extends SimpleForm {
 
 	public function __construct(GameManager $manager) {
-		parent::__construct("Game Select", "", $this->create($manager));
+		parent::__construct("Game Select", "", self::create($manager));
 	}
 
 	/**
@@ -24,23 +24,29 @@ class GameSelectForm extends SimpleForm {
 	 * @param GameManager $manager
 	 * @return Button[]
 	 */
-	public function create(GameManager $manager): array {
-		return array_map(static function (Game $game): Button {
-			$name = mb_strtoupper($game->getState()->name());
-			$joinable = $game->getState() === GameState::WAITING();
-			return new Button(
-				TextFormat::YELLOW . "Game (" . ($joinable ? TextFormat::GREEN : TextFormat::RED) . $name . TextFormat::YELLOW . ") " .
-				TextFormat::WHITE . "[" . TextFormat::YELLOW . $game->getPlayerManager()->getCount() . TextFormat::WHITE . "/" . TextFormat::YELLOW . Game::MAX_PLAYER_COUNT . TextFormat::WHITE . "]\n" .
-				TextFormat::WHITE . "Map: " . TextFormat::YELLOW . $game->getWorld()->getDisplayName() . TextFormat::WHITE . " | Kit: " . TextFormat::YELLOW . $game->getKit()->getName(),
-				static function(MeetupPlayer $player) use($game, $joinable): void {
-					if($joinable) {
-						$game->getPlayerManager()->join($player);
-					} else {
-						$player->notify(TextFormat::RED . "This game has already started! Please try another game!", TextFormat::RED);
-					}
+	public static function create(GameManager $manager): array {
+		return array_map(static fn (Game $game): Button => self::createButton($game), $manager->getAll());
+	}
+
+	public static function createButton(Game $game): Button {
+		$color = match($game->getState()->id()) {
+			GameState::WAITING()->id() => TextFormat::GREEN,
+			GameState::VOTING()->id(), GameState::COUNTDOWN()->id() => TextFormat::LIGHT_PURPLE,
+			default => TextFormat::RED
+		};
+		return new Button(
+			// could  inline the variable into the string, but it's more clear if it's separated
+			TextFormat::YELLOW . "Game (" . ($color . mb_strtoupper($game->getState()->name())) . TextFormat::YELLOW . ") " .
+			TextFormat::WHITE . "[" . TextFormat::YELLOW . $game->getPlayerManager()->getCount() . TextFormat::WHITE . "/" . TextFormat::YELLOW . Game::MAX_PLAYER_COUNT . TextFormat::WHITE . "]\n" .
+			TextFormat::WHITE . "Map: " . TextFormat::YELLOW . $game->getWorld()->getDisplayName() . TextFormat::WHITE . " | Kit: " . TextFormat::YELLOW . $game->getKitManager()->getKit()->getName(),
+			static function(MeetupPlayer $player) use($game): void {
+				if($game->getState() === GameState::WAITING() || $game->getState() === GameState::VOTING() || $game->getState() === GameState::COUNTDOWN()) {
+					$game->getPlayerManager()->join($player);
+				} else {
+					$game->getSpectatorManager()->join($player);
 				}
-			);
-		}, $manager->getAll());
+			}
+		);
 	}
 
 }

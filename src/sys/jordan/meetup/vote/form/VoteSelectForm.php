@@ -15,20 +15,17 @@ use sys\jordan\meetup\vote\VoteOption;
 class VoteSelectForm extends SimpleForm {
 
 	public function __construct(VoteManager $manager) {
-		parent::__construct("Vote Select", "", $this->create($manager));
+		parent::__construct("Vote Select", "", self::create($manager));
 	}
 
 	/**
 	 * @return Button[]
 	 */
-	public function create(VoteManager $manager): array {
-		return array_map(
-			fn(VoteOption $option): Button => $this->createButton($manager, $option),
-			$manager->getOptions()
-		);
+	public static function create(VoteManager $manager): array {
+		return array_map(static fn(VoteOption $option): Button => self::createButton($manager, $option), $manager->getOptions());
 	}
 
-	public function createButton(VoteManager $manager, VoteOption $option): Button {
+	public static function createButton(VoteManager $manager, VoteOption $option): Button {
 		$button = new Button(
 			CoreBase::PRIMARY_COLOR . $option->getName() . TextFormat::GRAY . " (" . CoreBase::SECONDARY_COLOR . count($option->getVotes()) . TextFormat::GRAY . ")",
 			static function (MeetupPlayer $player) use($option, $manager): void {
