@@ -157,8 +157,7 @@ class Border {
 			$this->size = $newSize;
 			$this->nextShrinkTime = $this->info->getShrinkInterval();
 			$this->create();
-			$size = TextFormat::YELLOW . "$this->size";
-			$this->getGame()->broadcastMessage(self::PREFIX . "The border has shrank to $size" . TextFormat::WHITE . "x" . $size);
+			$this->getGame()->broadcastMessage(self::PREFIX . TextFormat::YELLOW . "The border has shrank to" . TextFormat::YELLOW . $this->size . TextFormat::WHITE . "x" .  TextFormat::YELLOW . $this->size . TextFormat::WHITE . "!");
 			$this->canShrink = $this->info->getSize($this->borderIndex + 1) > 0;
 			if(!$this->canShrink) $this->getGame()->broadcastMessage(self::PREFIX . "The border has finished shrinking! Good luck!");
 		}
