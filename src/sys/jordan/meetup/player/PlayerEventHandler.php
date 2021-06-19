@@ -11,6 +11,7 @@ use pocketmine\event\entity\EntityRegainHealthEvent;
 use pocketmine\event\entity\ProjectileHitEntityEvent;
 use pocketmine\event\entity\ProjectileHitEvent;
 use pocketmine\event\player\PlayerChatEvent;
+use pocketmine\event\player\PlayerDropItemEvent;
 use pocketmine\event\player\PlayerExhaustEvent;
 use pocketmine\event\player\PlayerItemUseEvent;
 use pocketmine\event\player\PlayerQuitEvent;
@@ -69,6 +70,14 @@ class PlayerEventHandler {
 	}
 
 	public function handleExhaust(PlayerExhaustEvent $event): void {
+		/** @var MeetupPlayer $player */
+		$player = $event->getPlayer();
+		if(!$this->game->hasStarted()) {
+			$event->cancel();
+		}
+	}
+
+	public function handleDropItem(PlayerDropItemEvent $event): void {
 		/** @var MeetupPlayer $player */
 		$player = $event->getPlayer();
 		if(!$this->game->hasStarted()) {

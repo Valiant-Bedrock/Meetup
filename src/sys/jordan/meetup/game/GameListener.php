@@ -10,6 +10,7 @@ use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityRegainHealthEvent;
 use pocketmine\event\entity\ProjectileHitEvent;
 use pocketmine\event\player\PlayerChatEvent;
+use pocketmine\event\player\PlayerDropItemEvent;
 use pocketmine\event\player\PlayerExhaustEvent;
 use pocketmine\event\player\PlayerItemUseEvent;
 use pocketmine\event\player\PlayerQuitEvent;
@@ -99,6 +100,16 @@ class GameListener extends BaseListener {
 			$this->getGame()->getPlayerManager()->getHandler()->handleExhaust($event);
 		} elseif($this->getGame()->getSpectatorManager()->isSpectator($player)) {
 			$this->getGame()->getSpectatorManager()->getHandler()->handleExhaust($event);
+		}
+	}
+
+	public function handleDropItem(PlayerDropItemEvent $event): void {
+		/** @var MeetupPlayer $player */
+		$player = $event->getPlayer();
+		if($this->getGame()->getPlayerManager()->isPlayer($player)) {
+			$this->getGame()->getPlayerManager()->getHandler()->handleDropItem($event);
+		} elseif($this->getGame()->getSpectatorManager()->isSpectator($player)) {
+			$this->getGame()->getSpectatorManager()->getHandler()->handleDropItem($event);
 		}
 	}
 

@@ -8,6 +8,7 @@ use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityRegainHealthEvent;
 use pocketmine\event\player\PlayerChatEvent;
+use pocketmine\event\player\PlayerDropItemEvent;
 use pocketmine\event\player\PlayerExhaustEvent;
 use pocketmine\event\player\PlayerItemUseEvent;
 use pocketmine\event\player\PlayerQuitEvent;
@@ -35,8 +36,6 @@ class SpectatorEventHandler {
 	}
 
 	public function handleBreak(BlockBreakEvent $event): void {
-		/** @var MeetupPlayer $player */
-		$player = $event->getPlayer();
 		$event->cancel();
 	}
 
@@ -45,8 +44,10 @@ class SpectatorEventHandler {
 	}
 
 	public function handleExhaust(PlayerExhaustEvent $event): void {
-		/** @var MeetupPlayer $player */
-		$player = $event->getPlayer();
+		$event->cancel();
+	}
+
+	public function handleDropItem(PlayerDropItemEvent $event): void {
 		$event->cancel();
 	}
 
@@ -55,8 +56,7 @@ class SpectatorEventHandler {
 	}
 
 	public function handleItemUse(PlayerItemUseEvent $event): void {
-		/** @var MeetupPlayer $player */
-		$player = $event->getPlayer();
+		//TODO: Remove this in favor of using a hotbar menu for spectators
 		$event->cancel();
 	}
 }
