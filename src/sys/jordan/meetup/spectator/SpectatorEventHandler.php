@@ -54,9 +54,4 @@ class SpectatorEventHandler {
 	public function handleRegainHealth(EntityRegainHealthEvent $event): void {
 
 	}
-
-	public function handleItemUse(PlayerItemUseEvent $event): void {
-		//TODO: Remove this in favor of using a hotbar menu for spectators
-		$event->cancel();
-	}
 }

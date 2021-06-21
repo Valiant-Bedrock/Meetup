@@ -129,8 +129,6 @@ class GameListener extends BaseListener {
 		$player = $event->getPlayer();
 		if($this->getGame()->getPlayerManager()->isPlayer($player)) {
 			$this->getGame()->getPlayerManager()->getHandler()->handleItemUse($event);
-		} elseif($this->getGame()->getSpectatorManager()->isSpectator($player)) {
-			$this->getGame()->getSpectatorManager()->getHandler()->handleItemUse($event);
 		}
 	}
 
