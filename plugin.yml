@@ -1,7 +1,7 @@
 name: Meetup
 description: Meetup plugin for Valiant
 author: sylvrs
-version: 1.0.8
+version: 1.0.9
 depend:
   - Core
 api: 4.0.0

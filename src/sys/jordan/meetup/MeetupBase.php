@@ -70,6 +70,11 @@ class MeetupBase extends PluginBase {
 	}
 
 	public function onDisable(): void {
+		/** @var MeetupPlayer $player */
+		foreach($this->getServer()->getOnlinePlayers() as $player) {
+			// we'll implement something into the core later to fix this, but this works for now
+			$this->redirect($player, "valiantnetwork.xyz");
+		}
 		$this->getLogger()->info(TextFormat::RED . "{$this->getDescription()->getFullName()} has been disabled!");
 	}
 
@@ -172,6 +177,10 @@ class MeetupBase extends PluginBase {
 			TextFormat::WHITE . "Online: " . TextFormat::YELLOW . count($this->getServer()->getOnlinePlayers()) . $padding,
 			$line
 		];
+	}
+
+	public function redirect(MeetupPlayer $player, string $address, int $port = 19132): void {
+		$player->transfer($address, $port, "Server closed. Transferring to $address:$port");
 	}
 
 }
