@@ -15,6 +15,7 @@ class MeetupPermissions {
 	/** @var string */
 	private const PREFIX = "valiant.permission.";
 
+	public const CUSTOM_GAME = self::PREFIX . "customgame";
 	public const FORCE_START = self::PREFIX . "forcestart";
 
 
