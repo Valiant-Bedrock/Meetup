@@ -43,7 +43,7 @@ class GameScoreboard {
 			TextFormat::WHITE . " Border: " . TextFormat::YELLOW . "{$this->game->getBorder()->getSize()} {$this->game->getBorder()->getScoreboardTime()}"
 		];
 		if($player->getScoreboardExtradata()->hasData()) {
-			array_push($data, ...$player->getScoreboardExtraData()->getData());
+			array_push($data, ...array_values($player->getScoreboardExtraData()->getData()));
 		}
 		$data[] = self::$SCOREBOARD_LINE;
 		return $data;
