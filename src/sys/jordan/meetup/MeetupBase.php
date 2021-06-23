@@ -136,6 +136,7 @@ class MeetupBase extends PluginBase {
 		$player->setGamemode(GameMode::SURVIVAL());
 		$player->setNameTag($player->getName() . TextFormat::YELLOW . " [{$player->getOS()->getDisplayName()} / {$player->getInputMode()->getDisplayName()}]");
 		$player->setScoreTag("");
+		$player->getEffects()->clear();
 		$player->getInventory()->clearAll();
 		$player->getArmorInventory()->clearAll();
 		$player->feed();
