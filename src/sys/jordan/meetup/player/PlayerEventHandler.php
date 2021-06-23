@@ -6,8 +6,10 @@ namespace sys\jordan\meetup\player;
 
 
 use pocketmine\event\block\BlockBreakEvent;
+use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityRegainHealthEvent;
+use pocketmine\event\entity\EntityShootBowEvent;
 use pocketmine\event\entity\ProjectileHitEntityEvent;
 use pocketmine\event\entity\ProjectileHitEvent;
 use pocketmine\event\player\PlayerChatEvent;
@@ -33,9 +35,7 @@ class PlayerEventHandler {
 	}
 
 	public function handleChat(PlayerChatEvent $event): void {
-		/** @var MeetupPlayer $player */
-		$player = $event->getPlayer();
-		$this->getGame()->chat($player, $event);
+		$this->getGame()->chat($event);
 	}
 
 	public function handleQuit(PlayerQuitEvent $event): void {
@@ -53,6 +53,22 @@ class PlayerEventHandler {
 			if($event->getBlock()->getFullId() === $this->getGame()->getBorder()->getFullBlockId()) {
 				$event->cancel();
 			}
+		}
+	}
+
+	public function handlePlace(BlockPlaceEvent $event): void {
+		/** @var MeetupPlayer $player */
+		$player = $event->getPlayer();
+		$position = $event->getBlock()->getPos();
+		if($this->getGame()->getBorder()->exceedsHeightLimit($position)) {
+			$event->cancel();
+			$player->notify(TextFormat::RED . "Sky-basing is not allowed!", TextFormat::RED);
+		}
+	}
+
+	public function handleShootBow(EntityShootBowEvent $event): void {
+		if(!$this->game->hasStarted() || $this->game->getState()->equals(GameState::POSTGAME())) {
+			$event->cancel();
 		}
 	}
 
@@ -90,6 +106,9 @@ class PlayerEventHandler {
 		$player = $event->getEntity();
 		if($event->getRegainReason() !== EntityRegainHealthEvent::CAUSE_MAGIC && $event->getRegainReason() !== EntityRegainHealthEvent::CAUSE_CUSTOM) {
 			$event->cancel();
+		}
+		if(!$event->isCancelled()) {
+			$player->setScoreTag($player->getHealthString());
 		}
 	}
 

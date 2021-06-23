@@ -32,9 +32,6 @@ class BorderTask extends BaseTask {
 
 	public function onRun(): void {
 		$size = $this->getBorder()->getSize();
-		if($this->iteration % 2 === 0) {
-			$size -= 1; //a pair of opposite border walls should not fully extend
-		}
 		$wall = self::WALL_MAPPING[$this->iteration];
 		$this->getBorder()->createWall($size * $wall[0], $size * $wall[1], $size * $wall[2], $size * $wall[3]);
 		if(++$this->iteration > 3) {

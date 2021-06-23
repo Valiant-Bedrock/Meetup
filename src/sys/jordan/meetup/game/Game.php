@@ -43,8 +43,8 @@ class Game {
 	/** @var int */
 	public const MAX_PLAYER_COUNT = 50;
 
-	protected int $voting = 60;
-	protected int $countdown = 15;
+	protected int $voting = 45;
+	protected int $countdown = 30;
 	protected int $time = 0;
 	protected int $postgame = 15;
 
@@ -182,7 +182,6 @@ class Game {
 	public function start(): void {
 		$this->notify(TextFormat::GREEN . "The player threshold has been met!", TextFormat::GREEN);
 		$this->setState(GameState::VOTING());
-		$this->getPlayerManager()->start();
 		$this->getVoteManager()->giveItems();
 	}
 
@@ -198,6 +197,7 @@ class Game {
 			$player->getHungerManager()->setEnabled(true);
 		}
 		$this->setState(GameState::PLAYING());
+		$this->getPlayerManager()->play();
 		$this->broadcastMessage(TextFormat::GREEN . "The meetup has now started! Good luck!", true);
 	}
 
@@ -231,10 +231,10 @@ class Game {
 	public function handleVoting(): void {
 		$this->broadcastActionBar(TextFormat::YELLOW . "Voting will end in $this->voting...");
 		if($this->voting-- <= 0) {
-			$scenarios = []; // $this->getVoteManager()->check();
-//			foreach($scenarios as $scenario) {
-//				$this->getScenarioManager()->add($scenario);
-//			}
+			$scenarios = $this->getVoteManager()->check();
+			foreach($scenarios as $scenario) {
+				$this->getScenarioManager()->add($scenario);
+			}
 			if(count($scenarios) > 0) {
 				$message = TextFormat::GREEN . "The scenarios for this game are: [" . implode(", ",  array_map(fn(Scenario $scenario): string => TextFormat::YELLOW . $scenario->getName() . TextFormat::GREEN, $scenarios)) . TextFormat::GREEN . "]!";
 			} else {
@@ -247,13 +247,14 @@ class Game {
 	}
 
 	public function handleCountdown(): void {
+		$this->countdown--;
 		$this->broadcastActionBar(TextFormat::YELLOW . "The game will commence in $this->countdown...");
-		if($this->countdown-- <= 5) {
+		if($this->countdown <= 5) {
 			if($this->countdown === 0) {
 				$this->play();
 				$sound = new NoteSound(NoteInstrument::PIANO(), 127);
 			} else {
-				$sound = new ClickSound(5);
+				$sound = new ClickSound(3);
 			}
 			$this->broadcastSound($sound);
 		}
@@ -277,17 +278,17 @@ class Game {
 		foreach($this->getAll() as $player) {
 			$this->getScoreboard()->sendData($player);
 			$player->setScoreTag($player->getHealthString());
-			$this->broadcastTip(
-				TextFormat::WHITE . "CPS: " . TextFormat::YELLOW . $player->getClicksPerSecond() .
-				TextFormat::WHITE . " | Ping: " . TextFormat::YELLOW . $player->getNetworkSession()->getPing()
-			);
+//			$this->broadcastTip(
+//				TextFormat::WHITE . "CPS: " . TextFormat::YELLOW . $player->getClicksPerSecond() .
+//				TextFormat::WHITE . " | Ping: " . TextFormat::YELLOW . $player->getNetworkSession()->getPing()
+//			);
 		}
 	}
 
-	public function chat(MeetupPlayer $player, PlayerChatEvent $event, bool $isSpectator = false): void {
+	public function chat(PlayerChatEvent $event, bool $isSpectator = false): void {
 		$recipients = $isSpectator && !$this->getState()->equals(GameState::POSTGAME()) ? $this->getSpectatorManager()->getSpectators() : $this->getAll();
 		if($isSpectator) {
-			$event->setMessage(TextFormat::DARK_GRAY . "[Spectator] " . $event->getMessage());
+			$event->setMessage(TextFormat::DARK_GRAY . "[Spectator] {$event->getMessage()}");
 		}
 		$event->setRecipients($recipients);
 		$this->getLogger()->info($event->getMessage());
@@ -296,12 +297,6 @@ class Game {
 	public function broadcastTip(string $message): void {
 		foreach($this->getAll() as $player) {
 			$player->sendTip($message);
-		}
-	}
-
-	public function broadcastPopup(string $message): void {
-		foreach($this->getAll() as $player) {
-			$player->sendPopup($message);
 		}
 	}
 
@@ -381,6 +376,7 @@ class Game {
 	public function end(): void {
 		$this->getPlayerManager()->end();
 		$this->getSpectatorManager()->end();
+		$this->getScenarioManager()->end();
 
 		$this->getEliminationManager()->end();
 		$this->getKitManager()->end();
@@ -397,7 +393,7 @@ class Game {
 		$this->listener->unregister();
 		$this->getLogger()->info(TextFormat::YELLOW . "Handling world...");
 		$this->world->getServer()->getWorldManager()->unloadWorld($this->world);
-		$this->border->handleWorld();
+		$this->border->end();
 		$this->getLogger()->info(TextFormat::YELLOW . "Removing from game manager...");
 		$this->getPlugin()->getGameManager()->remove($this);
 		// clean up

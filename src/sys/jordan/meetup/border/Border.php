@@ -9,12 +9,14 @@ use pocketmine\block\Block;
 use pocketmine\block\BlockLegacyIds;
 use pocketmine\block\utils\DyeColor;
 use pocketmine\block\VanillaBlocks;
+use pocketmine\math\Vector3;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\utils\TextFormat;
 use pocketmine\world\format\Chunk;
 use pocketmine\world\Position;
 use pocketmine\world\utils\SubChunkExplorer;
 use pocketmine\world\World;
+use sys\jordan\core\world\WorldUtils;
 use sys\jordan\meetup\game\Game;
 use sys\jordan\meetup\MeetupBase;
 use sys\jordan\meetup\MeetupPlayer;
@@ -27,6 +29,11 @@ use function mt_rand;
 class Border {
 	use GameTrait;
 
+	/** @var int[][] */
+	public static array $CACHED_HEIGHT_LIMIT_DATA = [];
+
+	/** @var int */
+	public const SKY_BASING_THRESHOLD = 5;
 	/** @var int */
 	public const WALL_HEIGHT = 4;
 	/** @var string */
@@ -35,6 +42,8 @@ class Border {
 	protected Block $block;
 	/** The full block ID of the block to place */
 	protected int $fullBlockId;
+	/** Stores the max-Y coordinate for the thresholds of the border */
+	protected array $heightLimits = [];
 
 	/**
 	 * A list of all of the passable blocks
@@ -88,6 +97,34 @@ class Border {
 		$this->block = VanillaBlocks::STAINED_CLAY()->setColor(DyeColor::RED());
 		$this->fullBlockId = $this->block->getFullId();
 		$this->create();
+		$this->generateHeightLimits();
+	}
+
+	public function generateHeightLimits(): void {
+		$world = $this->getWorld();
+		if(isset(self::$CACHED_HEIGHT_LIMIT_DATA[$world->getDisplayName()])) {
+			$this->heightLimits = self::$CACHED_HEIGHT_LIMIT_DATA[$world->getDisplayName()];
+		} else {
+			for($x = -$this->size; $x <= $this->size; $x++) {
+				for($z = -$this->size; $z <= $this->size; $z++) {
+					$chunk = $world->loadChunk($x >> 4, $z >> 4);
+					$this->addHeightLimitAt($x, $z, $chunk->getHighestBlockAt($x & 0x0f, $z & 0x0f) + self::SKY_BASING_THRESHOLD);
+				}
+			}
+			self::$CACHED_HEIGHT_LIMIT_DATA[$world->getDisplayName()] = $this->heightLimits;
+		}
+	}
+
+	public function addHeightLimitAt(int $x, int $z, int $level): void {
+		$this->heightLimits["$x:$z"] = $level;
+	}
+
+	public function getHeightLimitAt(int $x, int $z): int {
+		return $this->heightLimits["$x:$z"] ?? 256;
+	}
+
+	public function exceedsHeightLimit(Vector3 $vector): bool {
+		return $vector->getY() > $this->getHeightLimitAt($vector->getX(), $vector->getZ());
 	}
 
 	public function getWorld(): World {
@@ -152,13 +189,16 @@ class Border {
 		}
 	}
 
+	/**
+	 * TODO: Fix border shrinking stopping one too early
+	 */
 	public function shrink(): void {
 		if($this->canShrink && ($newSize = $this->info->getSize($this->borderIndex++)) > -1) {
 			$this->size = $newSize;
 			$this->nextShrinkTime = $this->info->getShrinkInterval();
-			$this->create();
-			$this->getGame()->broadcastMessage(self::PREFIX . TextFormat::YELLOW . "The border has shrank to" . TextFormat::YELLOW . $this->size . TextFormat::WHITE . "x" .  TextFormat::YELLOW . $this->size . TextFormat::WHITE . "!");
 			$this->canShrink = $this->info->getSize($this->borderIndex + 1) > 0;
+			$this->create();
+			$this->getGame()->broadcastMessage(self::PREFIX . "The border has shrank to " . TextFormat::YELLOW . $this->size . TextFormat::WHITE . "x" .  TextFormat::YELLOW . $this->size . TextFormat::WHITE . "!");
 			if(!$this->canShrink) $this->getGame()->broadcastMessage(self::PREFIX . "The border has finished shrinking! Good luck!");
 		}
 
@@ -202,7 +242,7 @@ class Border {
 		for($y = 0; $y < self::WALL_HEIGHT; $y++) {
 			MeetupBase::getInstance()->getScheduler()->scheduleDelayedTask(new ClosureTask(function () use($x1, $x2, $z1, $z2): void {
 				$this->createLayer($x1, $x2, $z1, $z2);
-			}), (int) floor(self::WALL_HEIGHT * 2));
+			}), (int) floor($y * 2));
 		}
 	}
 
@@ -227,7 +267,7 @@ class Border {
 		$outsideZ = abs($player->getPosition()->getFloorZ()) >= $this->getSize();
 		$teleportDistance = $this->getTeleportDistance();
 		$teleportDistance = $teleportDistance > $this->getSize() ? 0.1 : $teleportDistance;
-		$location = $player->getLocation()->asLocation();
+		$location = $player->getLocation();
 		$location->x = $outsideX ? (($location->getFloorX() <=> 0) * ($this->getSize() - $teleportDistance)) : $location->x;
 		$location->z = $outsideZ ? (($location->getFloorZ() <=> 0) * ($this->getSize() - $teleportDistance)) : $location->z;
 		if($this->getWorld()->isChunkLoaded($location->getFloorX() >> 4, $location->getFloorZ() >> 4)) {
@@ -243,6 +283,12 @@ class Border {
 
 	public function handleWorld(): void {
 		WorldManager::delete(WorldManager::$TARGET_DIRECTORY . DIRECTORY_SEPARATOR . explode(DIRECTORY_SEPARATOR, $this->world->getFolderName())[1]);
+	}
+
+	public function end(): void {
+		$this->handleWorld();
+		$this->heightLimits = [];
+		unset($this->block, $this->borderIndex, $this->fullBlockId, $this->game, $this->info, $this->nextShrinkTime, $this->size, $this->world);
 	}
 
 }

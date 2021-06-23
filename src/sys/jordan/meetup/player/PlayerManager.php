@@ -71,7 +71,7 @@ class PlayerManager {
 		return $this->getCount() >= self::THRESHOLD;
 	}
 
-	public function start(): void {
+	public function play(): void {
 		$this->startingCount = count($this->players);
 	}
 
@@ -176,26 +176,35 @@ class PlayerManager {
 	}
 
 	public function death(MeetupPlayer $player, ?EntityDamageEvent $event = null): void {
+		$deathEvent = new MeetupPlayerDeathEvent($player, $event);
+		$deathEvent->call();
 		if(!$this->game->getScenarioManager()->exists(DefaultScenarios::TIMEBOMB())) {
 			$this->game->createPole($player);
 		}
-		$contents = [...$player->getInventory()->getContents(), ...$player->getArmorInventory()->getContents()];
-		foreach($contents as $item){
-			$this->getGame()->getWorld()->dropItem($player->getLocation()->asLocation(), $item);
+		$position = $player->getPosition();
+
+		if($deathEvent->canDropItems()) {
+			foreach([...$player->getInventory()->getContents(), ...$player->getArmorInventory()->getContents()] as $item){
+				$this->getGame()->getWorld()->dropItem($position, $item);
+			}
 		}
+		$this->getGame()->getWorld()->dropExperience($position, $player->getXpDropAmount());
+
 		$this->game->summonLightning($player);
+
 		if($player->isOnline()) {
-			$player->setGamemode(GameMode::SPECTATOR());
 			$this->getGame()->getPlayerManager()->remove($player);
+
 			$this->getGame()->getSpectatorManager()->add($player);
-			$player->getInventory()->clearAll();
-			$player->getArmorInventory()->clearAll();
 			$player->sendTitle(TextFormat::RED . "You died!", TextFormat::YELLOW . "Use /lobby to leave this match and enter a new one!");
 		}
-		/** @var MeetupPlayer $damager */
 		if($event instanceof EntityDamageByEntityEvent && ($damager = $event->getDamager()) instanceof MeetupPlayer) {
 			$this->getGame()->getEliminationManager()->addElimination($damager);
 		}
+		$this->game->broadcastMessage($this->createDeathMessage($player, $event));
+	}
+
+	public function createDeathMessage(MeetupPlayer $player, ?EntityDamageEvent $event = null): TranslationContainer {
 		$server = Server::getInstance();
 		$deathMessage = PlayerDeathEvent::deriveMessage($player->getName(), $event);
 		$parameters = [];
@@ -207,8 +216,7 @@ class PlayerManager {
 			}
 			$parameters[$i] = $name;
 		}
-
-		$this->game->broadcastMessage(new TranslationContainer($deathMessage->getText(), $parameters));
+		return new TranslationContainer($deathMessage->getText(), $parameters);
 	}
 
 }

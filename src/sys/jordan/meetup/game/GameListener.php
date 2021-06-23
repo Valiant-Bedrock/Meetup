@@ -6,6 +6,7 @@ namespace sys\jordan\meetup\game;
 
 
 use pocketmine\event\block\BlockBreakEvent;
+use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityRegainHealthEvent;
 use pocketmine\event\entity\ProjectileHitEvent;
@@ -78,6 +79,14 @@ class GameListener extends BaseListener {
 			$this->getGame()->getPlayerManager()->getHandler()->handleBreak($event);
 		} elseif($this->getGame()->getSpectatorManager()->isSpectator($player)) {
 			$this->getGame()->getSpectatorManager()->getHandler()->handleBreak($event);
+		}
+	}
+
+	public function handlePlace(BlockPlaceEvent $event): void {
+		/** @var MeetupPlayer $player */
+		$player = $event->getPlayer();
+		if($this->getGame()->getPlayerManager()->isPlayer($player)) {
+			$this->getGame()->getPlayerManager()->getHandler()->handlePlace($event);
 		}
 	}
 
