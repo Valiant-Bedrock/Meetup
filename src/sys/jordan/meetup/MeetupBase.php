@@ -12,6 +12,7 @@ use pocketmine\player\GameMode;
 use pocketmine\plugin\PluginBase;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\utils\TextFormat;
+use pocketmine\world\World;
 use sys\jordan\core\command\OverloadPatcher;
 use sys\jordan\core\CoreBase;
 use sys\jordan\core\utils\Scoreboard;
@@ -88,7 +89,8 @@ class MeetupBase extends PluginBase {
 		foreach($world->getRandomTickedBlocks() as $fullId => $boolean) {
 			$world->removeRandomTickedBlock(BlockFactory::getInstance()->fromFullBlock($fullId));
 		}
-
+		$world->setTime(World::TIME_MIDNIGHT);
+		$world->stopTime();
 	}
 
 	public function registerManagers(): void {
