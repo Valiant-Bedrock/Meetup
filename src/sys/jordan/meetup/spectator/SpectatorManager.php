@@ -58,7 +58,6 @@ class SpectatorManager {
 		$player->getArmorInventory()->clearAll();
 		$player->getInventory()->clearAll();
 		$player->setGamemode(GameMode::SPECTATOR());
-		$player->getScoreboard()->clearLines();
 		if(!$player->inGame() || $player->getGame() !== $this->game) {
 			$player->setGame($this->game);
 		}

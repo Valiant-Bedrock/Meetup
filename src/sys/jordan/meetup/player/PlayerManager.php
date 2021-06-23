@@ -8,6 +8,7 @@ use JetBrains\PhpStorm\Pure;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\player\PlayerDeathEvent;
+use pocketmine\item\VanillaItems;
 use pocketmine\lang\TranslationContainer;
 use pocketmine\player\GameMode;
 use pocketmine\Server;
@@ -34,7 +35,6 @@ class PlayerManager {
 
 	/** @var MeetupPlayer[] */
 	private array $players = [];
-
 	protected int $startingCount = -1;
 
 	/**
@@ -184,7 +184,7 @@ class PlayerManager {
 		$position = $player->getPosition();
 
 		if($deathEvent->canDropItems()) {
-			foreach([...$player->getInventory()->getContents(), ...$player->getArmorInventory()->getContents()] as $item){
+			foreach([...$player->getInventory()->getContents(), ...$player->getArmorInventory()->getContents(), VanillaItems::GOLD_INGOT()->setCount(8)] as $item){
 				$this->getGame()->getWorld()->dropItem($position, $item);
 			}
 		}
