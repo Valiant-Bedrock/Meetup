@@ -195,7 +195,7 @@ class PlayerManager {
 		if($player->isOnline()) {
 			$this->getGame()->getPlayerManager()->remove($player);
 
-			$this->getGame()->getSpectatorManager()->add($player);
+			$this->getGame()->getSpectatorManager()->add($player, false);
 			$player->sendTitle(TextFormat::RED . "You died!", TextFormat::YELLOW . "Use /lobby to leave this match and enter a new one!");
 		}
 		if($event instanceof EntityDamageByEntityEvent && ($damager = $event->getDamager()) instanceof MeetupPlayer) {
