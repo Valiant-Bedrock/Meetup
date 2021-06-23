@@ -1,7 +1,7 @@
 name: Meetup
 description: Meetup plugin for Paradox
 author: sylvrs
-version: 1.0.3
+version: 1.0.7
 depend:
   - Core
 api: 4.0.0

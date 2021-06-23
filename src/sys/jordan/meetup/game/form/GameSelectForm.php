@@ -19,8 +19,6 @@ class GameSelectForm extends SimpleForm {
 	}
 
 	/**
-	 * TODO: Instead of saying the game isn't joinable, we could add them as spectators(?)
-	 *
 	 * @param GameManager $manager
 	 * @return Button[]
 	 */

@@ -38,7 +38,7 @@ class MeetupUtilities {
 	}
 
 	public static function GOLDEN_HEAD(): Item {
-		return ItemFactory::getInstance()->get(ItemIds::GOLDEN_APPLE, SkullType::PLAYER()->getMagicNumber())->setCustomName(TextFormat::RESET . TextFormat::GOLD . "Golden Head");
+		return ItemFactory::getInstance()->get(ItemIds::GOLDEN_APPLE, SkullType::PLAYER()->getMagicNumber());
 	}
 
 }
