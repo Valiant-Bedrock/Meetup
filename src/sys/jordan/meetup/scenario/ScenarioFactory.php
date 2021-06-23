@@ -7,6 +7,7 @@ namespace sys\jordan\meetup\scenario;
 use sys\jordan\meetup\scenario\defaults\Bowless;
 use sys\jordan\meetup\scenario\defaults\Fireless;
 use sys\jordan\meetup\scenario\defaults\NoClean;
+use sys\jordan\meetup\scenario\defaults\Resilience;
 use sys\jordan\meetup\scenario\defaults\Switcheroo;
 use sys\jordan\meetup\scenario\defaults\Timebomb;
 
@@ -25,6 +26,7 @@ class ScenarioFactory {
 		$this->register(new Bowless);
 		$this->register(new Fireless);
 		$this->register(new NoClean);
+		$this->register(new Resilience);
 		$this->register(new Switcheroo);
 		$this->register(new Timebomb);
 	}

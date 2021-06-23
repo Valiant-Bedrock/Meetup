@@ -28,7 +28,7 @@ class VoteManager {
 		$this->setGame($game);
 		$this->options = [
 			...array_values(array_map(static fn(Scenario $scenario): VoteOption => new VoteOption($scenario->getName(), $scenario), DefaultScenarios::getAll())),
-			(self::$VANILLA = new VoteOption("Vanilla"))
+			(self::$VANILLA = VoteOption::VANILLA())
 		];
 		$this->menu = new VotingHotbarMenu;
 	}
@@ -69,13 +69,14 @@ class VoteManager {
 	 * @return Scenario[]
 	 */
 	public function check(int $count = 1): array {
-		usort($this->options, static fn (VoteOption $first, VoteOption $second): int => $first->getVotes() <=> $second->getVotes());
-		if(($this->options[array_key_first($this->options)]) === self::$VANILLA) {
+		$options = $this->options;
+		usort($options, static fn (VoteOption $first, VoteOption $second): int => count($second->getVotes()) <=> count($first->getVotes()));
+		if(($options[array_key_first($options)]) === self::$VANILLA) {
 			return [];
 		}
 		return array_map(
 			static fn(VoteOption $option): Scenario => $option->getScenario(),
-			array_slice(array_filter($this->options, static fn(VoteOption $option): bool => $option === self::$VANILLA), 0, $count)
+			array_slice(array_filter($options, static fn(VoteOption $option): bool => $option !== self::$VANILLA && $option->getScenario() instanceof Scenario), 0, $count)
 		);
 	}
 

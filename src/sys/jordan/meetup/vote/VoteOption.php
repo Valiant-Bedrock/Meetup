@@ -4,6 +4,7 @@
 namespace sys\jordan\meetup\vote;
 
 
+use JetBrains\PhpStorm\Pure;
 use sys\jordan\meetup\MeetupPlayer;
 use sys\jordan\meetup\scenario\Scenario;
 
@@ -13,11 +14,21 @@ class VoteOption {
 	 * A list of votes (player UUID => bool)
 	 */
 	private array $votes = [];
+	protected string $description = "";
 
-	public function __construct(protected string $name, protected ?Scenario $scenario = null) {}
+	#[Pure]
+	public function __construct(protected string $name, protected ?Scenario $scenario = null) {
+		if($this->scenario instanceof Scenario) {
+			$this->description = $scenario->getDescription();
+		}
+	}
 
 	public function getName(): string {
 		return $this->name;
+	}
+
+	public function getDescription(): string {
+		return $this->description;
 	}
 
 	public function getScenario(): ?Scenario {
@@ -52,6 +63,13 @@ class VoteOption {
 
 	public function clear(): void {
 		$this->votes = [];
+	}
+
+	#[Pure]
+	public static function VANILLA(): self {
+		$option = new VoteOption("Vanilla");
+		$option->description = "If selected, no gamemodes will be enabled for the game";
+		return $option;
 	}
 
 }
