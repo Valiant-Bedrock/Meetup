@@ -21,7 +21,6 @@ class MeetupPlayer extends CorePlayer {
 
 	use GameTrait;
 
-	protected ?NoCleanTask $noCleanTask = null;
 	protected ScoreboardExtraData $scoreboardExtraData;
 	protected PlayerRating $rating;
 
@@ -34,22 +33,6 @@ class MeetupPlayer extends CorePlayer {
 	#[Pure]
 	public function inGame(): bool {
 		return $this->game instanceof Game;
-	}
-
-	public function hasNoClean(): bool {
-		return $this->noCleanTask instanceof NoCleanTask;
-	}
-
-	public function removeNoClean(): void {
-		if($this->noCleanTask instanceof NoCleanTask) {
-			$this->noCleanTask->cancel();
-		}
-		$this->noCleanTask = null;
-	}
-
-	public function addNoClean(): void {
-		$this->removeNoClean();
-		$this->noCleanTask = new NoCleanTask($this);
 	}
 
 	public function getScoreboardExtraData(): ScoreboardExtraData {
