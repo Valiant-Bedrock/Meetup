@@ -12,6 +12,7 @@ use pocketmine\event\entity\EntityRegainHealthEvent;
 use pocketmine\event\entity\EntityShootBowEvent;
 use pocketmine\event\entity\ProjectileHitEntityEvent;
 use pocketmine\event\entity\ProjectileHitEvent;
+use pocketmine\event\inventory\CraftItemEvent;
 use pocketmine\event\player\PlayerChatEvent;
 use pocketmine\event\player\PlayerDropItemEvent;
 use pocketmine\event\player\PlayerExhaustEvent;
@@ -22,6 +23,7 @@ use sys\jordan\meetup\game\Game;
 use sys\jordan\meetup\game\GameState;
 use sys\jordan\meetup\MeetupPlayer;
 use sys\jordan\meetup\utils\GameTrait;
+use sys\jordan\meetup\utils\MeetupUtilities;
 
 class PlayerEventHandler {
 	use GameTrait;
@@ -32,6 +34,14 @@ class PlayerEventHandler {
 	 */
 	public function __construct(Game $game) {
 		$this->setGame($game);
+	}
+
+	public function handleCraftItem(CraftItemEvent $event) {
+		foreach($event->getOutputs() as $output) {
+			if(!$output->equals(MeetupUtilities::GOLDEN_HEAD(), true, false)) {
+				$event->cancel();
+			}
+		}
 	}
 
 	public function handleChat(PlayerChatEvent $event): void {
