@@ -14,11 +14,15 @@ use pocketmine\entity\effect\VanillaEffects;
 use pocketmine\item\GoldenApple;
 use pocketmine\item\ItemIdentifier;
 use pocketmine\item\ItemIds;
+use pocketmine\utils\TextFormat;
 
 class GoldenHead extends GoldenApple {
 
 	public function __construct(){
 		parent::__construct(new ItemIdentifier(ItemIds::GOLDEN_APPLE, SkullType::PLAYER()->getMagicNumber()));
+		if($this->getMeta() === SkullType::PLAYER()->getMagicNumber()) {
+			$this->setCustomName(TextFormat::RESET . TextFormat::GOLD . "Golden Head");
+		}
 	}
 
 	public function getAdditionalEffects() : array{

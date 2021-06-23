@@ -4,6 +4,7 @@
 namespace sys\jordan\meetup\kit\pool;
 
 
+use JetBrains\PhpStorm\Pure;
 use pocketmine\item\Item;
 use sys\jordan\meetup\kit\KitItem;
 
@@ -12,6 +13,7 @@ class ItemEntry {
 	private float $accumulation = 0.0;
 	protected KitItem $item;
 
+	#[Pure]
 	public function __construct(KitItem|Item $item, protected float $weight) {
 		if($item instanceof Item) $item = new KitItem($item);
 		$this->item = $item;

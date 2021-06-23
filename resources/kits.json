@@ -1,14 +1,14 @@
 {
   "Default": {
-    "armor": [
-      {
+    "armor": {
+      "helmet": {
         "entries": [
           {
-            "name": "diamond_helmet",
+            "name": "minecraft:diamond_helmet",
             "weight": 7
           },
           {
-            "name": "iron_helmet",
+            "name": "minecraft:iron_helmet",
             "weight": 13
           }
         ],
@@ -22,14 +22,14 @@
           }
         ]
       },
-      {
+      "chestplate": {
         "entries": [
           {
-            "name": "diamond_chestplate",
+            "name": "minecraft:diamond_chestplate",
             "weight": 5
           },
           {
-            "name": "iron_chestplate",
+            "name": "minecraft:iron_chestplate",
             "weight": 15
           }
         ],
@@ -43,14 +43,14 @@
           }
         ]
       },
-      {
+      "leggings": {
         "entries": [
           {
-            "name": "diamond_leggings",
+            "name": "minecraft:diamond_leggings",
             "weight": 5
           },
           {
-            "name": "iron_leggings",
+            "name": "minecraft:iron_leggings",
             "weight": 15
           }
         ],
@@ -64,14 +64,14 @@
           }
         ]
       },
-      {
+      "boots": {
         "entries": [
           {
-            "name": "diamond_boots",
+            "name": "minecraft:diamond_boots",
             "weight": 9
           },
           {
-            "name": "iron_boots",
+            "name": "minecraft:iron_boots",
             "weight": 11
           }
         ],
@@ -85,16 +85,16 @@
           }
         ]
       }
-    ],
+    },
     "items": [
       {
         "entries": [
           {
-            "name": "diamond_sword",
+            "name": "minecraft:diamond_sword",
             "weight": 5
           },
           {
-            "name": "iron_sword",
+            "name": "minecraft:iron_sword",
             "weight": 15
           }
         ],
@@ -109,7 +109,7 @@
         ]
       },
       {
-        "name": "bow",
+        "name": "minecraft:bow",
         "count": 1,
         "enchantments": [
           {
@@ -126,29 +126,26 @@
         ]
       },
       {
-        "name": "steak",
-        "count": {
-          "min": 32,
-          "max": 64
-        }
-      },
-      {
-        "name": "arrow",
+        "name": "minecraft:cooked_beef",
         "count": 64
       },
       {
-        "name": "diamond_pickaxe"
+        "name": "minecraft:arrow",
+        "count": 64
       },
       {
-        "name": "diamond_axe"
+        "name": "minecraft:diamond_pickaxe"
       },
       {
-        "name": "planks",
+        "name": "minecraft:diamond_axe"
+      },
+      {
+        "name": "minecraft:planks",
         "damage": 3,
         "count": 64
       },
       {
-        "name": "cobblestone",
+        "name": "minecraft:cobblestone",
         "count": 64
       }
     ]

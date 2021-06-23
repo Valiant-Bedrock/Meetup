@@ -37,6 +37,41 @@ class KitFactory {
 	}
 
 	public function load(): void {
+		foreach($this->getFile()->getAll() as $name => $data) {
+			$kit = Kit::load($name, $data);
+			$this->addKit($kit);
+			if($name === "Default") self::$DEFAULT_KIT = $kit;
+		}
+	}
+
+	public static function getInstance(): KitFactory {
+		return self::$instance;
+	}
+
+	/**
+	 * @return Kit[]
+	 */
+	public function getKits(): array {
+		return $this->kits;
+	}
+
+	public function getKit(string $name): ?Kit {
+		return $this->kits[$name] ?? null;
+	}
+
+	public function getDefault(): Kit {
+		return self::$DEFAULT_KIT;
+	}
+
+	public function getRandom(): ?Kit {
+		return $this->kits[array_rand($this->kits)] ?? null;
+	}
+
+	public function addKit(Kit $kit): void {
+		$this->kits[$kit->getName()] = $kit;
+	}
+
+	public function loadDefault(): void {
 		self::$DEFAULT_KIT = new Kit(
 			"Meetup",
 			[
@@ -62,33 +97,7 @@ class KitFactory {
 				new KitItem(VanillaItems::ARROW()->setCount(64)),
 			]
 		);
-//		foreach($this->getFile()->getAll() as $name => $data) {
-//
-//		}
-		$this->addKit(self::$DEFAULT_KIT);
-	}
-
-	public static function getInstance(): KitFactory {
-		return self::$instance;
-	}
-
-	/**
-	 * @return Kit[]
-	 */
-	public function getKits(): array {
-		return $this->kits;
-	}
-
-	public function getKit(string $name): ?Kit {
-		return $this->kits[$name] ?? null;
-	}
-
-	public function getRandom(): ?Kit {
-		return $this->kits[array_rand($this->kits)] ?? null;
-	}
-
-	public function addKit(Kit $kit): void {
-		$this->kits[$kit->getName()] = $kit;
+		//$this->addKit(self::$DEFAULT_KIT);
 	}
 
 }

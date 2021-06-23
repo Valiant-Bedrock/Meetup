@@ -14,6 +14,8 @@ class KitManager {
 
 	/** @var KitPullResult[] */
 	protected array $cachedResults = [];
+	/** (uuid => bool) */
+	protected array $usedRerolls = [];
 
 	public function __construct(Game $game, protected Kit $kit) {
 		$this->setGame($game);
@@ -27,12 +29,7 @@ class KitManager {
 	 * TODO: Add re-roll functionality
 	 */
 	public function give(MeetupPlayer $player): void {
-		if(!isset($this->cachedResults[$player->getUniqueId()->toString()])) {
-			$kit = $this->getKit()->pull();
-			$this->cachedResults[$player->getUniqueId()->toString()] = $kit;
-		} else {
-			$kit = $this->cachedResults[$player->getUniqueId()->toString()];
-		}
+		$kit = ($this->cachedResults[$player->getUniqueId()->toString()] ??= $this->getKit()->pull());
 		$player->getInventory()->setContents($kit->getItemContents());
 		$player->getArmorInventory()->setContents($kit->getArmorContents());
 	}
@@ -45,7 +42,16 @@ class KitManager {
 
 	public function clear(): void {
 		$this->cachedResults = [];
+		$this->usedRerolls = [];
 		unset($this->kit);
+	}
+
+	public function hasReroll(MeetupPlayer $player): bool {
+		return !isset($this->usedRerolls[$player->getUniqueId()->toString()]);
+	}
+
+	public function useReroll(MeetupPlayer $player): void {
+		$this->usedRerolls[$player->getUniqueId()->toString()] = true;
 	}
 
 	public function end(): void {
