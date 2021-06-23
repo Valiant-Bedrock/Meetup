@@ -41,22 +41,30 @@ class SpectatorManager {
 
 	/**
 	 * @param MeetupPlayer $player
-	 * @param bool $setup
 	 */
-	public function add(MeetupPlayer $player, bool $setup = true): void {
+	public function add(MeetupPlayer $player, bool $teleport = true): void {
 		if(!$this->isSpectator($player)) {
 			$this->spectators[$player->getUniqueId()->toString()] = $player;
-			if($setup) $this->setup($player);
+			$this->setup($player, $teleport);
 		}
 	}
 
 	/**
 	 * @param MeetupPlayer $player
+	 * @param bool $teleport
 	 */
-	public function setup(MeetupPlayer $player): void {
+	public function setup(MeetupPlayer $player, bool $teleport = true): void {
+		$player->getEffects()->clear();
+		$player->getArmorInventory()->clearAll();
+		$player->getInventory()->clearAll();
 		$player->setGamemode(GameMode::SPECTATOR());
 		$player->getScoreboard()->clearLines();
-		$player->setGame($this->game);
+		if(!$player->inGame() || $player->getGame() !== $this->game) {
+			$player->setGame($this->game);
+		}
+		if($teleport) {
+			$player->teleport($this->game->getWorld()->getSpawnLocation());
+		}
 	}
 
 	/**
@@ -68,8 +76,8 @@ class SpectatorManager {
 		}
 	}
 
-	public function join(MeetupPlayer $player): void {
-		$this->add($player);
+	public function join(MeetupPlayer $player, bool $teleport = true): void {
+		$this->add($player, $teleport);
 	}
 
 	public function quit(MeetupPlayer $player): void {

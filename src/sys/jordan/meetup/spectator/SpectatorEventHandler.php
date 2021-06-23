@@ -24,9 +24,7 @@ class SpectatorEventHandler {
 	}
 
 	public function handleChat(PlayerChatEvent $event): void {
-		/** @var MeetupPlayer $player */
-		$player = $event->getPlayer();
-		$this->getGame()->chat($player, $event, true);
+		$this->getGame()->chat($event, true);
 	}
 
 	public function handleQuit(PlayerQuitEvent $event): void {

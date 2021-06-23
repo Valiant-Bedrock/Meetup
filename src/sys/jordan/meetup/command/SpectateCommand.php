@@ -35,7 +35,7 @@ class SpectateCommand extends BaseUserCommand {
 					if($player->inGame()) {
 						$game = $player->getGame();
 						if($game->getPlayerManager()->isPlayer($player)) {
-							$game->getSpectatorManager()->join($sender);
+							$game->getSpectatorManager()->join($sender, false);
 							$sender->teleport($player->getLocation());
 							return TextFormat::GREEN . "Now spectating: " . TextFormat::GOLD . $player->getName();
 						}
