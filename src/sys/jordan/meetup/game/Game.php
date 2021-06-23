@@ -23,7 +23,7 @@ use pocketmine\world\sound\Sound;
 use pocketmine\world\World;
 use sys\jordan\core\utils\TickEnum;
 use sys\jordan\meetup\border\Border;
-use sys\jordan\meetup\border\BorderInfo;
+use sys\jordan\meetup\border\BorderValues;
 use sys\jordan\meetup\eliminations\EliminationManager;
 use sys\jordan\meetup\kit\Kit;
 use sys\jordan\meetup\kit\KitManager;
@@ -81,7 +81,7 @@ class Game {
 		$this->logger = new GameLogger($this);
 
 		$this->setState(GameState::WAITING());
-		$this->border = new Border($this, $world, new BorderInfo(200, [100, 50, 25, 10]));
+		$this->border = new Border($this, $world, BorderValues::$INFO);
 
 		$world->setTime(World::TIME_FULL);
 		$world->stopTime();

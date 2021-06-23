@@ -16,7 +16,6 @@ use pocketmine\world\format\Chunk;
 use pocketmine\world\Position;
 use pocketmine\world\utils\SubChunkExplorer;
 use pocketmine\world\World;
-use sys\jordan\core\world\WorldUtils;
 use sys\jordan\meetup\game\Game;
 use sys\jordan\meetup\MeetupBase;
 use sys\jordan\meetup\MeetupPlayer;
@@ -32,8 +31,6 @@ class Border {
 	/** @var int[][] */
 	public static array $CACHED_HEIGHT_LIMIT_DATA = [];
 
-	/** @var int */
-	public const SKY_BASING_THRESHOLD = 5;
 	/** @var int */
 	public const WALL_HEIGHT = 4;
 	/** @var string */
@@ -105,10 +102,11 @@ class Border {
 		if(isset(self::$CACHED_HEIGHT_LIMIT_DATA[$world->getDisplayName()])) {
 			$this->heightLimits = self::$CACHED_HEIGHT_LIMIT_DATA[$world->getDisplayName()];
 		} else {
+			$threshold = BorderValues::$SKYBASING_THRESHOLD;
 			for($x = -$this->size; $x <= $this->size; $x++) {
 				for($z = -$this->size; $z <= $this->size; $z++) {
 					$chunk = $world->loadChunk($x >> 4, $z >> 4);
-					$this->addHeightLimitAt($x, $z, $chunk->getHighestBlockAt($x & 0x0f, $z & 0x0f) + self::SKY_BASING_THRESHOLD);
+					$this->addHeightLimitAt($x, $z, $chunk->getHighestBlockAt($x & 0x0f, $z & 0x0f) + $threshold);
 				}
 			}
 			self::$CACHED_HEIGHT_LIMIT_DATA[$world->getDisplayName()] = $this->heightLimits;

@@ -17,6 +17,7 @@ use sys\jordan\core\command\OverloadPatcher;
 use sys\jordan\core\CoreBase;
 use sys\jordan\core\utils\Scoreboard;
 use sys\jordan\core\utils\TickEnum;
+use sys\jordan\meetup\border\BorderValues;
 use sys\jordan\meetup\command\ForceStartCommand;
 use sys\jordan\meetup\command\KillTopCommand;
 use sys\jordan\meetup\command\LobbyCommand;
@@ -54,6 +55,7 @@ class MeetupBase extends PluginBase {
 		MeetupPermissions::register();
 		$this->registerCommands();
 		$this->registerRecipes();
+		$this->registerConfiguration();
 		$this->scoreboardUpdateTask = new ClosureTask(function (): void {
 			foreach($this->getLobbyPlayers() as $player) {
 				$player->getScoreboard()->setLineArray($this->getScoreboardData($player));
@@ -86,6 +88,11 @@ class MeetupBase extends PluginBase {
 			new SpectateCommand($this)
 		]);
 		OverloadPatcher::load($this);
+	}
+
+	public function registerConfiguration(): void {
+		$this->saveDefaultConfig();
+		BorderValues::load($this->getConfig());
 	}
 
 	public function registerLobby(): void {

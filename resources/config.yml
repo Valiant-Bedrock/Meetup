@@ -1,0 +1,16 @@
+border:
+  # The default info to load in for all games
+  default-info:
+    # The interval in which to shrink the border
+    shrink-interval: 120
+    # The initial size of the border
+    initial-size: 200
+    # The border sizes to shrink to
+    borders:
+      - 100
+      - 50
+      - 25
+      - 10
+      - 5
+  # The amount of blocks above the map to call skybasing
+  skybasing-threshold: 8

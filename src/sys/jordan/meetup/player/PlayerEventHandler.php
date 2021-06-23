@@ -23,7 +23,6 @@ use sys\jordan\meetup\game\Game;
 use sys\jordan\meetup\game\GameState;
 use sys\jordan\meetup\MeetupPlayer;
 use sys\jordan\meetup\utils\GameTrait;
-use sys\jordan\meetup\utils\MeetupUtilities;
 
 class PlayerEventHandler {
 	use GameTrait;
@@ -36,12 +35,13 @@ class PlayerEventHandler {
 		$this->setGame($game);
 	}
 
-	public function handleCraftItem(CraftItemEvent $event) {
-		foreach($event->getOutputs() as $output) {
-			if(!$output->equals(MeetupUtilities::GOLDEN_HEAD(), true, false)) {
-				$event->cancel();
-			}
-		}
+	public function handleCraftItem(CraftItemEvent $event): void {
+//		foreach($event->getOutputs() as $output) {
+//			//TODO: Implement a whitelist for craftable items
+//			if(!$output->equals(MeetupUtilities::GOLDEN_HEAD(), true, false) || $output->equals(VanillaBlocks::CRAFTING_TABLE()->asItem(), false, false)) {
+//				$event->cancel();
+//			}
+//		}
 	}
 
 	public function handleChat(PlayerChatEvent $event): void {
@@ -55,8 +55,6 @@ class PlayerEventHandler {
 	}
 
 	public function handleBreak(BlockBreakEvent $event): void {
-		/** @var MeetupPlayer $player */
-		$player = $event->getPlayer();
 		if(!$this->game->hasStarted()) {
 			$event->cancel();
 		} else {
@@ -96,16 +94,12 @@ class PlayerEventHandler {
 	}
 
 	public function handleExhaust(PlayerExhaustEvent $event): void {
-		/** @var MeetupPlayer $player */
-		$player = $event->getPlayer();
 		if(!$this->game->hasStarted()) {
 			$event->cancel();
 		}
 	}
 
 	public function handleDropItem(PlayerDropItemEvent $event): void {
-		/** @var MeetupPlayer $player */
-		$player = $event->getPlayer();
 		if(!$this->game->hasStarted()) {
 			$event->cancel();
 		}
