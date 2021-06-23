@@ -80,8 +80,8 @@ class NoClean extends Scenario {
 	public function removeInvulnerability(MeetupPlayer|string $player): void {
 		if($player instanceof MeetupPlayer) {
 			$player->getScoreboardExtraData()->removeData($this->getName());
+			$player = $player->getUniqueId()->toString();
 		}
-		$player = $player->getUniqueId()->toString();
 		if(isset($this->tasks[$player])) {
 			unset($this->tasks[$player]);
 		}

@@ -17,10 +17,11 @@ class NoCleanTask extends BaseTask {
 	public function __construct(protected NoClean $instance, protected MeetupPlayer $player) {
 		parent::__construct(MeetupBase::getInstance());
 		$this->uuid = $player->getUniqueId()->toString();
-		$player->getScoreboardExtraData()->setData($instance->getName(), TextFormat::YELLOW . "{$instance->getName()}: ");
+		$player->getScoreboardExtraData()->setData($instance->getName(), $instance->getName() . ":" . TextFormat::YELLOW . $this->countdown);
 	}
 
 	public function onRun(): void {
+		$this->player->getScoreboardExtraData()->setData($this->instance->getName(), $this->instance->getName() . ":" . TextFormat::YELLOW . $this->countdown);
 		if($this->countdown-- <= 0) {
 			$this->cancel();
 			if($this->player->isOnline()) {
