@@ -73,5 +73,6 @@ class TimebombTask extends BaseTask {
 
 	public function onCancel(): void {
 		$this->particle->setInvisible();
+		$this->updateParticle();
 	}
 }
