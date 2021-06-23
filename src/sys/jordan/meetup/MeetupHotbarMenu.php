@@ -30,7 +30,7 @@ class MeetupHotbarMenu extends HotbarMenu {
 			8 => new ItemCallback(
 				VanillaItems::BOOK()->setCustomName(TextFormat::YELLOW . "Settings"),
 				static function(MeetupPlayer $player): void {
-
+					//$player->sendForm(new MeetupSettingsForm);
 				})
 		]);
 	}
