@@ -80,7 +80,7 @@ class GameManager {
 
 	public function setupRandom(): void {
 		$data = $this->getPlugin()->getWorldManager()->getRandom();
-		$kit = KitFactory::getInstance()->getRandom();
+		$kit = KitFactory::getInstance()->getDefault();
 		if($data instanceof MeetupWorldData && $kit instanceof Kit) {
 			if(($game = $this->create($data, $kit)) instanceof Game) {
 				$this->add($game);
