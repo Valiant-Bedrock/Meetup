@@ -7,8 +7,7 @@ namespace sys\jordan\meetup\rating;
 use JetBrains\PhpStorm\Pure;
 use pocketmine\utils\TextFormat;
 
-class PlayerRating {
-
+class SkillRating {
 
 	public function __construct(protected int $value = -1) {}
 
