@@ -67,8 +67,7 @@ class PlayerEventHandler {
 	public function handlePlace(BlockPlaceEvent $event): void {
 		/** @var MeetupPlayer $player */
 		$player = $event->getPlayer();
-		$position = $event->getBlock()->getPos();
-		if($this->getGame()->getBorder()->exceedsHeightLimit($position)) {
+		if($this->getGame()->getBorder()->exceedsHeightLimit($event->getBlock()->getPos())) {
 			$event->cancel();
 			$player->notify(TextFormat::RED . "Sky-basing is not allowed!", TextFormat::RED);
 		}
