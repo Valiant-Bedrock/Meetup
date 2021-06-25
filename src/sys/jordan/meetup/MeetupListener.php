@@ -14,7 +14,7 @@ use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\player\PlayerMoveEvent;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\permission\DefaultPermissions;
-use pocketmine\plugin\Plugin;
+use pocketmine\plugin\PluginBase;
 use sys\jordan\core\base\BaseListener;
 
 class MeetupListener extends BaseListener {
@@ -27,7 +27,7 @@ class MeetupListener extends BaseListener {
 		parent::__construct($plugin);
 	}
 
-	public function getPlugin(): Plugin|MeetupBase {
+	public function getPlugin(): PluginBase|MeetupBase {
 		return $this->plugin;
 	}
 

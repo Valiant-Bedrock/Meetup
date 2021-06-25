@@ -16,7 +16,7 @@ use pocketmine\event\player\PlayerDropItemEvent;
 use pocketmine\event\player\PlayerExhaustEvent;
 use pocketmine\event\player\PlayerItemUseEvent;
 use pocketmine\event\player\PlayerQuitEvent;
-use pocketmine\plugin\Plugin;
+use pocketmine\plugin\PluginBase;
 use sys\jordan\core\base\BaseListener;
 use sys\jordan\meetup\MeetupBase;
 use sys\jordan\meetup\MeetupPlayer;
@@ -42,7 +42,7 @@ class GameListener extends BaseListener {
 		$this->setGame($game);
 	}
 
-	public function getPlugin(): Plugin|MeetupBase {
+	public function getPlugin(): PluginBase|MeetupBase {
 		return $this->plugin;
 	}
 
