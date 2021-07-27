@@ -87,7 +87,7 @@ class Game {
 		$world->stopTime();
 
 		$this->heartbeat = new ClosureTask(function (): void { $this->update(); });
-		$this->scoreboardHeartbeat = new ClosureTask(function (): void { $this->updateUI(); });
+		$this->scoreboardHeartbeat = new ClosureTask(function (): void { $this->updateScoreboard(); });
 
 		$this->listener = new GameListener($plugin, $this);
 		$this->listener->register();
@@ -274,7 +274,7 @@ class Game {
 		}
 	}
 
-	public function updateUI(): void {
+	public function updateScoreboard(): void {
 		foreach($this->getAll() as $player) {
 			$this->getScoreboard()->sendData($player);
 			$player->setScoreTag($player->getHealthString());
