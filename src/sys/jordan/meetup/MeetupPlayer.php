@@ -13,6 +13,7 @@ use pocketmine\Server;
 use sys\jordan\core\CorePlayer;
 use sys\jordan\meetup\game\Game;
 use sys\jordan\meetup\rating\SkillRating;
+use sys\jordan\meetup\stats\MeetupPlayerStats;
 use sys\jordan\meetup\utils\GameTrait;
 use sys\jordan\meetup\utils\ScoreboardExtraData;
 
@@ -21,12 +22,16 @@ class MeetupPlayer extends CorePlayer {
 	use GameTrait;
 
 	protected ScoreboardExtraData $scoreboardExtraData;
-	protected SkillRating $rating;
+	protected MeetupPlayerStats $stats;
 
 	public function __construct(Server $server, NetworkSession $session, PlayerInfo $playerInfo, bool $authenticated, Location $spawnLocation, ?CompoundTag $namedtag) {
 		parent::__construct($server, $session, $playerInfo, $authenticated, $spawnLocation, $namedtag);
 		$this->scoreboardExtraData = new ScoreboardExtraData;
 		$this->rating = new SkillRating; //TODO: Load from data
+	}
+
+	public function fetch(): void {
+		//TODO: Fetch stats
 	}
 
 	#[Pure]
