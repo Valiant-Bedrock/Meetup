@@ -44,7 +44,7 @@ class MeetupListener extends BaseListener {
 	 * @priority HIGHEST
 	 */
 	public function handleJoin(PlayerJoinEvent $event): void {
-		$event->setJoinMessage(null);
+		$event->setJoinMessage("");
 		/** @var MeetupPlayer $player */
 		$player = $event->getPlayer();
 		$this->getPlugin()->setupLobbyPlayer($player);
@@ -116,7 +116,7 @@ class MeetupListener extends BaseListener {
 	}
 
 	public function handleQuit(PlayerQuitEvent $event): void {
-		$event->setQuitMessage(null);
+		$event->setQuitMessage("");
 	}
 
 	public function handleMove(PlayerMoveEvent $event): void {
