@@ -21,6 +21,7 @@ class MeetupPlayer extends CorePlayer {
 
 	use GameTrait;
 
+	protected SkillRating $rating;
 	protected ScoreboardExtraData $scoreboardExtraData;
 	protected MeetupPlayerStats $stats;
 

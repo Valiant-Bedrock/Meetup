@@ -68,15 +68,15 @@ class Game {
 	protected GameState $state;
 
 
-
 	/**
 	 * Game constructor.
 	 * @param MeetupBase $plugin
 	 * @param int $id
 	 * @param World $world
 	 * @param Kit $kit
+	 * @param bool $ranked
 	 */
-	public function __construct(MeetupBase $plugin, protected int $id, protected World $world, Kit $kit) {
+	public function __construct(MeetupBase $plugin, protected int $id, protected World $world, Kit $kit, protected bool $ranked = false) {
 		$this->setPlugin($plugin);
 		$this->logger = new GameLogger($this);
 
@@ -117,6 +117,10 @@ class Game {
 
 	public function getWorld(): World {
 		return $this->world;
+	}
+
+	public function isRanked(): bool {
+		return $this->ranked;
 	}
 
 	public function getPlayerManager(): PlayerManager {
