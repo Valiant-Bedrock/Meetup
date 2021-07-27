@@ -11,7 +11,6 @@ border:
       - 50
       - 25
       - 10
-      - 5
   # The amount of blocks above the map to call skybasing
   skybasing-threshold: 8
   # The amount of time to play the border animation (higher => slower)
