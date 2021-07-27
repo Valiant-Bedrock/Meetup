@@ -31,7 +31,6 @@ class BorderInfo {
 		return $this->borders[$index] ?? -1;
 	}
 
-
 	#[Pure]
 	public static function parse(array $data): self {
 		return new BorderInfo($data["initial-size"], $data["borders"], $data["shrink-interval"]);
