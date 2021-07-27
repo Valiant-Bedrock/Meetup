@@ -19,6 +19,7 @@ use sys\jordan\core\utils\Scoreboard;
 use sys\jordan\core\utils\TickEnum;
 use sys\jordan\meetup\border\BorderValues;
 use sys\jordan\meetup\command\ForceStartCommand;
+use sys\jordan\meetup\command\HubCommand;
 use sys\jordan\meetup\command\KillTopCommand;
 use sys\jordan\meetup\command\LobbyCommand;
 use sys\jordan\meetup\command\SpectateCommand;
@@ -83,6 +84,7 @@ class MeetupBase extends PluginBase {
 	public function registerCommands(): void {
 		$this->getServer()->getCommandMap()->registerAll("meetup", [
 			new ForceStartCommand($this),
+			new HubCommand($this),
 			new KillTopCommand($this),
 			new LobbyCommand($this),
 			new SpectateCommand($this)

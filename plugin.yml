@@ -4,5 +4,6 @@ author: sylvrs
 version: 1.0.9
 depend:
   - Core
+  - Portal
 api: 4.0.0
 main: sys\jordan\meetup\MeetupBase
